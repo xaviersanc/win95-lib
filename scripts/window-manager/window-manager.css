@@ -1,0 +1,659 @@
+body.win95-desktop .logout-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.25);
+    z-index: 40;
+}
+
+body.win95-desktop .logout-modal.show {
+    display: flex !important;
+}
+
+body.win95-desktop .logout-modal.is-hidden {
+    display: none;
+}
+
+body.win95-desktop .logout-modal-dialog {
+    width: 480px;
+    max-width: calc(100% - 16px);
+    margin: 0;
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+body.win95-desktop .logout-modal-body {
+    padding: 14px 12px;
+    background: silver;
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .logout-modal-footer {
+    flex-wrap: wrap;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+body.win95-desktop .desktop-icons {
+    position: absolute;
+    inset: 0 0 36px 0;
+    z-index: 2;
+}
+
+body.win95-desktop .desktop-icons.is-drop-target {
+    outline: 1px dashed #000080;
+    outline-offset: -4px;
+}
+
+body.win95-desktop .desktop-icon {
+    position: absolute;
+    width: 76px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.1;
+    user-select: none;
+    cursor: default;
+    touch-action: none;
+}
+
+body.win95-desktop .desktop-icon.is-dragging {
+    opacity: 0.85;
+}
+
+body.win95-desktop .desktop-icon.is-drop-target {
+    outline: 1px dashed #000080;
+    outline-offset: 2px;
+    background: rgba(0, 0, 128, 0.12);
+}
+
+body.win95-desktop .desktop-icon img {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 6px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .desktop-shortcut-icon-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.win95-desktop .desktop-shortcut-icon-wrap>img {
+    margin-bottom: 6px;
+}
+
+body.win95-desktop .desktop-shortcut-overlay {
+    position: absolute;
+    left: -2px;
+    bottom: 2px;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    image-rendering: pixelated;
+    pointer-events: none;
+}
+
+body.win95-desktop [data-recycle-bin-dropzone].is-drop-target {
+    outline: 1px dashed #000080;
+    outline-offset: -4px;
+}
+
+body.win95-desktop .desktop-icon span {
+    padding: 1px 4px;
+    text-shadow: 1px 1px 0 #000;
+    letter-spacing: 0.1px;
+}
+
+body.win95-desktop .taskbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 36px;
+    padding: 3px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #c0c0c0;
+    border-top: 2px solid #fff;
+    box-shadow: inset 0 1px 0 #dfdfdf;
+    margin: 0;
+    z-index: 20;
+}
+
+body.win95-desktop .taskbar-left {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+body.win95-desktop .start-btn {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 4px 10px;
+    min-width: 84px;
+    justify-content: center;
+    margin-right: 3px;
+}
+
+body.win95-desktop .start-btn.active {
+    border-style: inset;
+    box-shadow: inset 1px 1px 0 #000;
+}
+
+body.win95-desktop .start-menu {
+    position: fixed;
+    left: 4px;
+    bottom: 38px;
+    width: 230px;
+    display: flex;
+    min-height: 260px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #fff #404040 #404040 #fff;
+    box-shadow: 1px 1px 0 #000;
+    z-index: 30;
+}
+
+body.win95-desktop .start-menu.is-hidden {
+    display: none;
+}
+
+body.win95-desktop .start-menu-banner {
+    width: 34px;
+    background: linear-gradient(180deg, #000080 0%, #1084d0 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 8px 0;
+}
+
+body.win95-desktop .start-menu-banner-text {
+    color: #fff;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    font-size: 16px;
+}
+
+body.win95-desktop .start-menu-items {
+    flex: 1;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: #c0c0c0;
+}
+
+body.win95-desktop .start-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    padding: 6px 8px;
+    font-size: 12px;
+    color: #000;
+}
+
+body.win95-desktop .start-menu-item:hover,
+body.win95-desktop .start-menu-item:focus {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .start-menu-item img {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .start-menu-separator {
+    height: 1px;
+    margin: 4px 6px;
+    background: #808080;
+    border-bottom: 1px solid #fff;
+}
+
+body.win95-desktop .start-btn img,
+body.win95-desktop .task-btn img {
+    width: 16px;
+    height: 16px;
+}
+
+/* Un bouton par fenêtre : icône de l'application + titre de la fenêtre. Les boutons rétrécissent quand il y en a
+   beaucoup (titre coupé par « … », complet en info-bulle). */
+body.win95-desktop .task-btn {
+    display: inline-flex;
+    flex: 0 1 170px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    min-width: 44px;
+    height: 26px;
+    padding: 2px 6px;
+    font-size: 11px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+body.win95-desktop .task-btn img {
+    flex: none;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .task-btn-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Fenêtre active : bouton enfoncé, texte en gras et fond tramé (comme Windows 95). */
+body.win95-desktop .task-btn.active {
+    border-style: inset;
+    border-right-color: #fff;
+    border-bottom-color: #fff;
+    box-shadow: inset 1px 1px 0 #000;
+    font-weight: bold;
+    background-color: #e0e0e0;
+    background-image: repeating-conic-gradient(#fff 0 25%, #c0c0c0 0 50%);
+    background-size: 2px 2px;
+}
+
+body.win95-desktop .tray-clock {
+    min-width: 64px;
+    text-align: center;
+    padding: 6px 8px;
+    background: #c0c0c0;
+    border-top: 2px solid #808080;
+    border-left: 2px solid #808080;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    color: #000;
+    font-size: 11px;
+    line-height: 1;
+}
+
+/* Boîtes de dialogue génériques (scripts/services/win95-dialog.js) */
+body.win95-desktop .win95-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.25);
+    z-index: 10001;
+}
+
+body.win95-desktop .win95-dialog-box {
+    width: 360px;
+    margin: 0;
+}
+
+body.win95-desktop .win95-dialog-body {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px 14px;
+    background: silver;
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .win95-dialog-icon {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .win95-dialog-content {
+    flex: 1;
+    min-width: 0;
+}
+
+body.win95-desktop .win95-dialog-message {
+    margin: 0 0 8px;
+    white-space: pre-line;
+}
+
+body.win95-desktop .win95-dialog-input {
+    width: 100%;
+}
+
+body.win95-desktop .win95-dialog-footer {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+body.win95-desktop .win95-dialog-footer .btn {
+    min-width: 75px;
+}
+
+/* Menu contextuel partagé (scripts/services/win95-context-menu.js) */
+
+body.win95-desktop .win95-context-menu {
+    position: fixed;
+    z-index: 10000;
+    min-width: 150px;
+    padding: 2px;
+    display: flex;
+    flex-direction: column;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #dfdfdf #000 #000 #dfdfdf;
+    box-shadow: inset 1px 1px #fff, inset -1px -1px #808080;
+    font-size: 12px;
+    color: #000;
+}
+
+body.win95-desktop .win95-context-item {
+    display: block;
+    width: 100%;
+    padding: 3px 20px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: default;
+    box-shadow: none;
+    min-width: 0;
+}
+
+body.win95-desktop .win95-context-item.is-default {
+    font-weight: bold;
+}
+
+body.win95-desktop .win95-context-item {
+    position: relative;
+}
+
+body.win95-desktop .win95-context-item.is-checked::before {
+    content: "✓";
+    position: absolute;
+    left: 6px;
+}
+
+body.win95-desktop .win95-context-hint {
+    float: right;
+    margin-left: 24px;
+}
+
+body.win95-desktop .win95-context-item:hover:not(:disabled),
+body.win95-desktop .win95-context-item:focus-visible:not(:disabled) {
+    background: #000080;
+    color: #fff;
+    outline: none;
+}
+
+/* Élément à sous-menu (ex. Nouveau ►) : flèche à droite, reste en surbrillance tant que le sous-menu est ouvert. */
+body.win95-desktop .win95-context-item.has-submenu {
+    position: relative;
+}
+
+body.win95-desktop .win95-context-item.has-submenu::after {
+    content: "►";
+    position: absolute;
+    right: 6px;
+    font-size: 8px;
+    line-height: 16px;
+}
+
+body.win95-desktop .win95-context-item.is-open:not(:disabled) {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .win95-context-item:disabled {
+    color: #808080;
+    text-shadow: 1px 1px #fff;
+}
+
+body.win95-desktop .win95-context-separator {
+    height: 0;
+    margin: 3px 2px;
+    border-top: 1px solid #808080;
+    border-bottom: 1px solid #fff;
+}
+
+/* Pas de zoom tactile (pincement, double-tap) : voir aussi scripts/services/zoom-guard.js */
+html {
+    touch-action: pan-x pan-y;
+}
+
+body.win95-desktop .win95-dialog-field {
+    margin-bottom: 8px;
+}
+
+body.win95-desktop .win95-dialog-field label {
+    display: block;
+    margin-bottom: 3px;
+}
+
+/* Fonds d'écran du Bureau (Win95Wallpaper, Propriétés de Affichage).
+   Mêmes règles pour le Bureau (.desktop[data-wallpaper]) et les aperçus (.wallpaper-preview[data-wallpaper]). */
+body.win95-desktop .desktop[data-wallpaper="sarcelle"],
+body.win95-desktop .wallpaper-preview[data-wallpaper="sarcelle"] {
+    background: #008080;
+}
+
+body.win95-desktop .desktop[data-wallpaper="nuages"],
+body.win95-desktop .wallpaper-preview[data-wallpaper="nuages"] {
+    background: #7cbde8 url("../../assets/clouds2.jpg") repeat;
+    background-size: 512px 512px;
+}
+
+body.win95-desktop .wallpaper-preview[data-wallpaper="nuages"] {
+    background-size: 160px 160px;
+}
+
+/* Installation : dégradé bleu profond de l'écran d'installation. */
+body.win95-desktop .desktop[data-wallpaper="installation"],
+body.win95-desktop .wallpaper-preview[data-wallpaper="installation"] {
+    background: linear-gradient(to bottom, #0000d0 0%, #00009a 45%, #000060 75%, #000020 100%);
+}
+
+/* Rivets bleus : plaque bleu nuit, joints de plaques et rivets en relief. */
+body.win95-desktop .desktop[data-wallpaper="rivets"],
+body.win95-desktop .wallpaper-preview[data-wallpaper="rivets"] {
+    background-color: #1f3a7a;
+    background-image:
+        radial-gradient(circle at 12px 12px, #dbe4fb 0 1.5px, #7f97d3 2.5px 3px, #0f1f45 3.5px 4.5px, transparent 5px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(rgba(0, 0, 0, 0.28) 1px, transparent 1px),
+        linear-gradient(135deg, #274a96 0%, #1b3268 100%);
+    background-size: 24px 24px, 96px 96px, 96px 96px, 100% 100%;
+}
+
+/* Natte de paille : tressage croisé, tons chauds. */
+body.win95-desktop .desktop[data-wallpaper="paille"],
+body.win95-desktop .wallpaper-preview[data-wallpaper="paille"] {
+    background-color: #d6b061;
+    background-image:
+        repeating-linear-gradient(45deg, rgba(122, 78, 18, 0.38) 0 2px, transparent 2px 9px),
+        repeating-linear-gradient(-45deg, rgba(255, 238, 180, 0.45) 0 2px, transparent 2px 9px),
+        repeating-linear-gradient(0deg, rgba(150, 105, 35, 0.12) 0 1px, transparent 1px 3px);
+}
+
+/* Briques rouges : rangées décalées, deux tons de rouge, joints clairs. */
+body.win95-desktop .desktop[data-wallpaper="briques"],
+body.win95-desktop .wallpaper-preview[data-wallpaper="briques"] {
+    background-color: #d8cdc0;
+    background-image:
+        linear-gradient(335deg, #9c2f22 23px, transparent 23px),
+        linear-gradient(155deg, #c0452f 23px, transparent 23px),
+        linear-gradient(335deg, #9c2f22 23px, transparent 23px),
+        linear-gradient(155deg, #c0452f 23px, transparent 23px);
+    background-size: 58px 58px;
+    background-position: 0 2px, 4px 35px, 29px 31px, 34px 6px;
+}
+
+/* Écran d'arrêt « Vous pouvez maintenant éteindre l'ordinateur » (Démarrer > Arrêter) */
+body.win95-desktop .shutdown-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #000;
+    color: #ff8c00;
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    font-size: 16px;
+    text-align: center;
+    cursor: pointer;
+}
+
+body.win95-desktop .shutdown-screen p {
+    margin: 0;
+    color: #ff8c00;
+}
+
+body.win95-desktop .shutdown-screen .shutdown-hint {
+    font-size: 12px;
+    color: #808080;
+}
+
+/* Menu Démarrer : sous-menus (Programmes > Accessoires > Jeux…) */
+body.win95-desktop .start-menu-group {
+    position: relative;
+}
+
+body.win95-desktop .start-menu-item.has-submenu::after {
+    content: "►";
+    margin-left: auto;
+    font-size: 8px;
+}
+
+body.win95-desktop .start-menu-group:hover > .start-menu-item,
+body.win95-desktop .start-menu-group:focus-within > .start-menu-item {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .start-submenu {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: -4px;
+    min-width: 200px;
+    padding: 4px;
+    flex-direction: column;
+    gap: 1px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #fff #404040 #404040 #fff;
+    box-shadow: 1px 1px 0 #000;
+}
+
+body.win95-desktop .start-menu-group:hover > .start-submenu,
+body.win95-desktop .start-menu-group:focus-within > .start-submenu {
+    display: flex;
+}
+
+/* Fenêtres d'accessoires et de jeux : taille fixe, pas d'agrandissement. */
+body.win95-desktop .app-fixed-window [data-window-action="maximize"] {
+    display: none;
+}
+
+body.win95-desktop .app-body {
+    height: calc(100% - 24px);
+    padding: 0;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+    overflow: hidden;
+}
+
+/* Barre de menus d'une application (Win95MenuBar) */
+body.win95-desktop .win95-menubar {
+    display: flex;
+    gap: 0;
+    padding: 1px 2px;
+    background: #c0c0c0;
+    border-bottom: 1px solid #808080;
+    box-shadow: 0 1px 0 #fff;
+}
+
+body.win95-desktop .win95-menubar-item {
+    margin: 0;
+    padding: 2px 8px;
+    border: 0;
+    background: transparent;
+    color: #000;
+    font-size: 12px;
+    cursor: default;
+}
+
+body.win95-desktop .win95-menubar-item:hover,
+body.win95-desktop .win95-menubar-item.is-open,
+body.win95-desktop .win95-menubar-item:focus-visible {
+    background: #000080;
+    color: #fff;
+    outline: none;
+}
+
+body.win95-desktop .app-fixed-window {
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Compte connecté, dans la zone de notification (désactivable : Win95Config.userTray = false). */
+body.win95-desktop .tray-user {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+    max-width: 160px;
+    height: 26px;
+    margin-right: 4px;
+    padding: 2px 6px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+body.win95-desktop .tray-user img {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .tray-user span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #000;
+}
+

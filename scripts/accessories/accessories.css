@@ -1,0 +1,247 @@
+/* Accessoires : Calculatrice, Horloge, Table des caractères. */
+
+/* --- Calculatrice ----------------------------------------------------------------------------- */
+body.win95-desktop .calc {
+    display: inline-block;
+    padding: 8px 8px 6px;
+    background: #c0c0c0;
+    color: #000;
+}
+
+body.win95-desktop .calc-display {
+    height: 28px;
+    margin-bottom: 2px;
+    padding: 2px 6px;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    color: #000;
+    font: 18px "Courier New", monospace;
+    line-height: 20px;
+    text-align: right;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+body.win95-desktop .calc-pending {
+    min-height: 14px;
+    margin-bottom: 4px;
+    color: #404040;
+    font-size: 11px;
+    text-align: right;
+}
+
+body.win95-desktop .calc-top {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+body.win95-desktop .calc-memory-flag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 26px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    color: #000;
+    font-weight: bold;
+}
+
+body.win95-desktop .calc-top .calc-btn {
+    flex: 1;
+}
+
+body.win95-desktop .calc-keys {
+    display: flex;
+    gap: 14px;
+}
+
+body.win95-desktop .calc-row {
+    display: grid;
+    grid-template-columns: repeat(6, 36px);
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+body.win95-desktop .calc-row-sci {
+    grid-template-columns: repeat(3, 40px);
+}
+
+body.win95-desktop .calc-btn {
+    height: 26px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+body.win95-desktop .calc-number {
+    color: #000080;
+}
+
+body.win95-desktop .calc-operator,
+body.win95-desktop .calc-btn.calc-memory,
+body.win95-desktop .calc-clear {
+    color: #a00000;
+}
+
+body.win95-desktop .calc-function {
+    color: #000;
+}
+
+body.win95-desktop .calc-sci-toggles {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    margin-bottom: 4px;
+}
+
+body.win95-desktop .calc-sci-toggles .property-check {
+    margin: 0;
+    padding: 0;
+}
+
+body.win95-desktop .calc-angle {
+    width: 40px;
+}
+
+/* --- Horloge ------------------------------------------------------------------------------------ */
+body.win95-desktop .clockapp {
+    display: inline-block;
+    padding: 10px;
+    background: #c0c0c0;
+    color: #000;
+    text-align: center;
+}
+
+body.win95-desktop .clockapp-canvas {
+    display: block;
+    margin: 0 auto;
+}
+
+body.win95-desktop .clockapp-canvas[hidden],
+body.win95-desktop .clockapp-digital[hidden],
+body.win95-desktop .clockapp-date[hidden] {
+    display: none;
+}
+
+body.win95-desktop .clockapp-digital {
+    width: 220px;
+    padding: 24px 0;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    color: #000;
+    font: bold 36px "Courier New", monospace;
+}
+
+body.win95-desktop .clockapp-date {
+    margin-top: 8px;
+    color: #000;
+    font-size: 12px;
+}
+
+/* --- Table des caractères ------------------------------------------------------------------------------- */
+body.win95-desktop .charmap {
+    position: relative;
+    padding: 8px 10px;
+    color: #000;
+}
+
+body.win95-desktop .charmap-top,
+body.win95-desktop .charmap-copy {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+body.win95-desktop .charmap label {
+    margin: 0;
+    color: #000;
+    white-space: nowrap;
+}
+
+body.win95-desktop .charmap .form-95 {
+    margin-top: 0;
+    color: #000;
+}
+
+body.win95-desktop .charmap-top select {
+    flex: 1;
+    min-width: 0;
+}
+
+body.win95-desktop .charmap-copy input {
+    flex: 1;
+    min-width: 0;
+}
+
+body.win95-desktop .charmap-grid {
+    display: grid;
+    height: 232px;
+    margin-bottom: 6px;
+    overflow-y: auto;
+    align-content: start;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+}
+
+body.win95-desktop .charmap-cell {
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid #c0c0c0;
+    background: #fff;
+    color: #000;
+    font-size: 16px;
+    line-height: 22px;
+    text-align: center;
+    cursor: default;
+}
+
+body.win95-desktop .charmap-cell:hover {
+    border-color: #000;
+}
+
+body.win95-desktop .charmap-cell.selected {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .charmap-cell:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -3px;
+}
+
+body.win95-desktop .charmap-status {
+    min-height: 16px;
+    color: #000;
+}
+
+body.win95-desktop .charmap-zoom {
+    position: absolute;
+    right: 28px;
+    bottom: 76px;
+    width: 64px;
+    height: 64px;
+    border: 2px solid #000;
+    background: #fff;
+    color: #000;
+    font-size: 44px;
+    line-height: 60px;
+    text-align: center;
+    pointer-events: none;
+}
+
+body.win95-desktop .charmap-zoom[hidden] {
+    display: none;
+}

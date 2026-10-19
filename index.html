@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Windows 95</title>
+    <meta name="description" content="Un bureau façon Windows 95 dans le navigateur : explorateur de fichiers, Corbeille, Bloc-notes, Paint, lecteurs, accessoires, jeux et Panneau de configuration.">
+    <meta name="theme-color" content="#008080">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png">
+    <link rel="shortcut icon" href="favicon.ico">
+</head>
+
+<body class="win95-desktop">
+    <main class="desktop" aria-label="Bureau Windows 95">
+        <section class="desktop-icons" aria-label="Icônes du bureau">
+            <div class="desktop-icon" data-desktop-app="internet-explorer" title="Ouvrir Mes documents">
+                <img src="assets/icons/directory_open_file_mydocs-4.png" alt="">
+                <span>Mes documents</span>
+            </div>
+            <div class="desktop-icon" data-desktop-app="recycle-bin" title="Ouvrir la Corbeille">
+                <img src="assets/icons/recycle_bin_empty-4.png" alt="">
+                <span>Corbeille</span>
+            </div>
+        </section>
+    </main>
+
+    <footer class="taskbar" aria-label="Barre des tâches">
+        <div class="taskbar-left">
+            <button class="btn start-btn" type="button">
+                <img src="assets/icons/windows-0.png" alt="">
+                Démarrer
+            </button>
+        </div>
+        <div class="tray-clock" id="tray-clock" aria-label="Heure"></div>
+    </footer>
+
+    <!--
+        Configuration (facultative) : voir scripts/services/win95-config.js.
+        Exemple avec Supabase et Google Drive :
+        window.Win95Config = {
+            storage: { provider: "supabase+drive" },
+            accounts: { provider: "supabase" },
+            supabase: { url: "https://xxxx.supabase.co", anonKey: "…" }
+        };
+    -->
+    <script>
+        window.Win95Config = window.Win95Config || {};
+    </script>
+    <!-- Le chargeur charge la bibliothèque dans l'ordre contractuel (liste unique : scripts/loader.js). -->
+    <script src="scripts/loader.js"></script>
+</body>
+
+</html>

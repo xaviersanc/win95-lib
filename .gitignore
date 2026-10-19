@@ -1,0 +1,17 @@
+# Local archives and backups
+archive/
+*.bak
+*.old
+*.orig
+*.tmp
+*.swp
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+node_modules/
+tests/.tmp/
+.env
+.env.local
+.vercel/

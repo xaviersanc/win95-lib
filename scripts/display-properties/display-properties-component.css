@@ -1,0 +1,122 @@
+/* Propriétés de Affichage : aperçu du fond d'écran et vignettes (Win95DisplayProperties). */
+body.win95-desktop .display-properties-body {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 24px);
+    padding: 6px;
+    background: #c0c0c0;
+    color: #000;
+    overflow: auto;
+}
+
+body.win95-desktop .display-properties-section {
+    flex: 1;
+    margin: 0 0 6px;
+    padding: 6px 8px 8px;
+    border: 2px groove #fff;
+    color: #000;
+}
+
+body.win95-desktop .display-properties-section legend {
+    width: auto;
+    margin: 0;
+    padding: 0 4px;
+    font-size: 12px;
+    color: #000;
+}
+
+body.win95-desktop .display-properties-note {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #000;
+    text-align: center;
+}
+
+body.win95-desktop .display-properties-monitor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 4px auto 6px;
+}
+
+body.win95-desktop .display-properties-monitor-screen {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 220px;
+    height: 150px;
+    padding: 10px;
+    border: 10px solid #c0c0c0;
+    border-color: #dfdfdf #808080 #808080 #dfdfdf;
+    box-shadow: 0 0 0 1px #404040, inset 1px 1px 0 #404040;
+}
+
+/* Icônes posées sur le fond du bureau : texte blanc ombré, comme sur le vrai Bureau. */
+body.win95-desktop .display-properties-monitor-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 64px;
+    color: #fff;
+    font-size: 10px;
+    text-align: center;
+    text-shadow: 1px 1px 0 #000;
+}
+
+body.win95-desktop .display-properties-monitor-icon img {
+    width: 24px;
+    height: 24px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .display-properties-monitor-stand {
+    width: 90px;
+    height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #dfdfdf #404040 #404040 #dfdfdf;
+    border-top: 0;
+}
+
+body.win95-desktop .display-properties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+}
+
+body.win95-desktop .display-properties-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid #808080;
+    background: #c0c0c0;
+    color: #000;
+    text-align: center;
+}
+
+body.win95-desktop .display-properties-thumb {
+    display: block;
+    height: 56px;
+    border: 2px inset #c0c0c0;
+}
+
+body.win95-desktop .display-properties-choice.selected {
+    outline: 2px solid #000080;
+    outline-offset: 1px;
+}
+
+/* Sélection façon Windows 95 : texte blanc sur bleu marine (jamais sur gris). */
+body.win95-desktop .display-properties-choice.selected .display-properties-label {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .display-properties-label {
+    padding: 0 2px;
+    font-size: 11px;
+    color: #000;
+}

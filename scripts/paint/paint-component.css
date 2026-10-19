@@ -1,0 +1,324 @@
+body.win95-desktop .paint-window {
+    top: 60px;
+    left: 200px;
+    width: 720px;
+    min-height: 360px;
+}
+
+body.win95-desktop .paint-body {
+    height: calc(100% - 24px);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    background: #c0c0c0;
+    outline: none;
+    user-select: none;
+}
+
+body.win95-desktop .paint-menu-bar {
+    flex: none;
+}
+
+body.win95-desktop .paint-workspace {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+}
+
+body.win95-desktop .paint-left {
+    flex: none;
+    width: 58px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Boîte à outils : deux colonnes de boutons 26 x 26, comme Paint de Windows 95. */
+body.win95-desktop .paint-toolbox {
+    display: grid;
+    grid-template-columns: repeat(2, 26px);
+    gap: 0;
+    padding: 2px;
+    justify-content: center;
+}
+
+body.win95-desktop .paint-tool,
+body.win95-desktop .paint-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: #000;
+    font: 11px "Microsoft Sans Serif", Tahoma, sans-serif;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #fff #404040 #404040 #fff;
+    box-shadow: inset -1px -1px 0 #808080;
+    cursor: default;
+    border-radius: 0;
+}
+
+body.win95-desktop .paint-tool {
+    width: 26px;
+    height: 26px;
+}
+
+/* Bouton enfoncé : cadre inversé et fond pointillé. */
+body.win95-desktop .paint-tool.is-active,
+body.win95-desktop .paint-option.is-active,
+body.win95-desktop .paint-tool:active,
+body.win95-desktop .paint-option:active {
+    border-color: #404040 #fff #fff #404040;
+    box-shadow: inset 1px 1px 0 #808080;
+    background-color: #fff;
+    background-image:
+        linear-gradient(45deg, #c0c0c0 25%, transparent 25%, transparent 75%, #c0c0c0 75%),
+        linear-gradient(45deg, #c0c0c0 25%, transparent 25%, transparent 75%, #c0c0c0 75%);
+    background-size: 2px 2px;
+    background-position: 0 0, 1px 1px;
+}
+
+body.win95-desktop .paint-tool.is-active svg,
+body.win95-desktop .paint-option.is-active svg {
+    transform: translate(1px, 1px);
+}
+
+body.win95-desktop .paint-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+    padding: 2px;
+    border: 1px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    background: #c0c0c0;
+    align-content: start;
+    min-height: 40px;
+}
+
+body.win95-desktop .paint-options[hidden] {
+    display: none;
+}
+
+body.win95-desktop .paint-options.is-wide {
+    grid-template-columns: 1fr;
+}
+
+body.win95-desktop .paint-option {
+    min-height: 16px;
+    border-color: transparent;
+    box-shadow: none;
+    background: transparent;
+}
+
+body.win95-desktop .paint-option.is-active {
+    border-color: #404040 #fff #fff #404040;
+    background-color: #000080;
+    background-image: none;
+}
+
+body.win95-desktop .paint-option.is-active svg {
+    transform: none;
+    filter: invert(1);
+}
+
+/* Zone de dessin : cadre enfoncé, fond gris foncé autour de l'image. */
+body.win95-desktop .paint-scroll {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: auto;
+    background: #808080;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+}
+
+body.win95-desktop .paint-stage {
+    position: relative;
+    line-height: 0;
+    width: max-content;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+body.win95-desktop .paint-stage[data-tool="fill"] {
+    cursor: cell;
+}
+
+body.win95-desktop .paint-stage[data-tool="select"],
+body.win95-desktop .paint-stage[data-tool="text"] {
+    cursor: crosshair;
+}
+
+body.win95-desktop .paint-stage[data-tool="magnifier"] {
+    cursor: zoom-in;
+}
+
+body.win95-desktop .paint-doc,
+body.win95-desktop .paint-overlay {
+    display: block;
+    image-rendering: pixelated;
+    background: #fff;
+}
+
+body.win95-desktop .paint-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: transparent;
+    pointer-events: none;
+}
+
+body.win95-desktop .paint-selection {
+    position: absolute;
+    box-sizing: border-box;
+    border: 1px dashed #000080;
+    outline: 1px dashed #fff;
+    outline-offset: -2px;
+    pointer-events: none;
+}
+
+body.win95-desktop .paint-selection[hidden] {
+    display: none;
+}
+
+body.win95-desktop .paint-textarea {
+    position: absolute;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 1px;
+    border: 1px dashed #000;
+    resize: none;
+    overflow: hidden;
+    outline: none;
+    line-height: 1.2;
+    user-select: text;
+}
+
+body.win95-desktop .paint-textbar {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 4px;
+    border-bottom: 1px solid #808080;
+    background: #c0c0c0;
+}
+
+body.win95-desktop .paint-textbar[hidden] {
+    display: none;
+}
+
+body.win95-desktop .paint-textbar .paint-text-font {
+    width: 150px;
+}
+
+body.win95-desktop .paint-textbar .paint-text-size {
+    width: 54px;
+}
+
+body.win95-desktop .paint-textbar .win95-wordpad-btn.is-active {
+    border-color: #404040 #fff #fff #404040;
+    background: #e0e0e0;
+}
+
+/* Palette : couleur de premier plan / arrière-plan, puis 28 couleurs sur deux rangées. */
+body.win95-desktop .paint-bottom {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 4px 4px;
+}
+
+body.win95-desktop .paint-colorbox {
+    position: relative;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border: 1px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    margin-left: 4px;
+}
+
+body.win95-desktop .paint-color-fore,
+body.win95-desktop .paint-color-back {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border: 1px solid;
+    border-color: #fff #404040 #404040 #fff;
+    box-shadow: inset -1px -1px 0 #808080;
+}
+
+body.win95-desktop .paint-color-back {
+    left: 12px;
+    top: 12px;
+}
+
+body.win95-desktop .paint-color-fore {
+    left: 4px;
+    top: 4px;
+    z-index: 1;
+}
+
+body.win95-desktop .paint-palette {
+    display: grid;
+    grid-template-columns: repeat(14, 16px);
+    grid-template-rows: repeat(2, 16px);
+    gap: 0;
+    margin-left: 4px;
+}
+
+body.win95-desktop .paint-swatch {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 1px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    border-radius: 0;
+    cursor: default;
+}
+
+body.win95-desktop .paint-color-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+body.win95-desktop .paint-status {
+    flex: none;
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-top: 1px solid #fff;
+    background: #c0c0c0;
+    font-size: 12px;
+    color: #000;
+}
+
+body.win95-desktop .paint-status > span {
+    padding: 1px 6px;
+    border: 1px solid;
+    border-color: #808080 #fff #fff #808080;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.win95-desktop .paint-status-help {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+body.win95-desktop .paint-status-cell {
+    flex: none;
+    min-width: 80px;
+}
