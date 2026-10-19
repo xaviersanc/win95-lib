@@ -2,6 +2,22 @@
 
 Versionnement sémantique : une version **majeure** pour tout changement incompatible de l'API d'extension, de la configuration, des fournisseurs, des clés de stockage, des événements `win95:*` ou de l'ordre de chargement.
 
+## 1.2.0 — Connexion locale (téléphone)
+
+Version mineure : rien d'existant ne change de comportement ; un projet qui n'en veut pas ajoute `"local-link"` à `Win95Config.exclude`.
+
+**Ajouts**
+- **Application « Connexion locale »** (icône du bureau, Programmes > Accessoires, supprimable dans Ajout/Suppression de programmes, droits par compte) : crée une **session temporaire** (jeton aléatoire de 20 caractères, 5 minutes) et l'affiche en **QR code** avec compte à rebours, adresse copiable et « Nouveau code ».
+- **Page du téléphone** : l'adresse du QR code (`?win95link=<jeton>&exp=<échéance>`) ouvre la même page en **mode téléphone** : le chargeur ne charge que `core` + `local-link` (pas de démarrage, de comptes ni de bureau) et affiche une fenêtre Windows 95 plein écran **vide**, à remplir par le projet.
+- **Services** `Win95QR` (générateur de QR code sans dépendance : octets UTF-8, correction M, versions 1 à 10, 213 octets) et `Win95LocalLink` (`createSession`, `getSession`, `closeSession`, `registerPhonePage`, événements `win95:local-link-changed` et `win95:local-link-phone-ready`).
+- **Chargeur** : module `local-link` ; **mode téléphone** ; option de plugin `phone: true` (seuls ces plugins se chargent en mode téléphone).
+- **Configuration** : `localLink: { baseUrl, ttlMinutes }` (`baseUrl` = adresse joignable depuis le téléphone quand la page est ouverte en `localhost`).
+- Icône `assets/icons/mobile_phone-0.png`.
+- **`npm start` change** : `tools/dev-server.mjs` remplace `python -m http.server`. À la manière d'Expo Go, il détecte l'adresse IP du poste sur le réseau local, ouvre le navigateur du PC sur `localhost` (Web Crypto, donc comptes et connexion, exige localhost ou HTTPS) et injecte dans les pages HTML `window.Win95DevServer.lanUrl`, que « Connexion locale » met dans le QR code (joignable depuis le téléphone sans configuration) et affiche un QR code dans le terminal. Options : `--port`, `--dir`, `--no-open`.
+- Tests : QR code (structure, format BCH, capacité), application, expiration, mode téléphone, plugin `phone`, exclusion.
+
+**Limite connue** : aucune donnée ne circule encore entre l'ordinateur et le téléphone (pas de serveur, aucune requête réseau). La session n'existe qu'en mémoire du poste ; l'échéance dans l'adresse n'est qu'un confort d'affichage côté téléphone.
+
 ## 1.1.0 — fondations d'une dépendance
 
 Première version pensée pour être utilisée par d'autres projets (le projet Mecha en premier).

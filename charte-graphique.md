@@ -74,6 +74,7 @@ Sources : `assets/win95.css` (base), `scripts/window-manager/window-manager.css`
 | **Menu contextuel** | `Win95ContextMenu.open(x, y, items)` | `win95-context-menu.js` | Clic droit, sous-menus (`items`). |
 | **Boîte de dialogue** | `Win95Dialog.confirm / alert / prompt / form` (`win95-dialog-*`) | `win95-dialog.js` | Questions et saisies. |
 | **Boîte « Arrêt de Windows »** | `modal logout-modal` | `window-manager.js` | Menu Démarrer > Arrêter. |
+| **Fenêtre de connexion locale / page du téléphone** | `local-link-body`, `local-link-qr` (QR noir sur fond blanc enfoncé, zone de silence comprise), `local-link-phone` + `local-link-phone-window` | `local-link.css` | Application « Connexion locale » ; page de liaison plein écran du téléphone (fenêtre Windows 95 sur fond `#008080`, contenu blanc enfoncé, barre d'état). |
 | **Vignette de choix** | `display-properties-choice` (`.selected`) | `display-properties-component.css` | Choisir un élément parmi plusieurs (fonds d'écran). |
 
 Jeux de cartes et Démineur (`scripts/games/`) : tapis vert `#008000` et cartes blanches arrondies (cartes de jeu, hors règles d'angles de l'interface) ; compteurs rouges sur noir du Démineur. L'interface autour (menus, barre d'état) suit la charte.

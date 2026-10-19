@@ -1,0 +1,146 @@
+/* Connexion locale : fenêtre de l'ordinateur (QR code) et page de liaison du téléphone. */
+
+/* --- Ordinateur ------------------------------------------------------------------------------- */
+body.win95-desktop .local-link-app {
+    display: flex;
+    flex-direction: column;
+}
+
+body.win95-desktop .local-link-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .local-link-intro,
+body.win95-desktop .local-link-label,
+body.win95-desktop .local-link-note {
+    margin: 0;
+    color: #000;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+body.win95-desktop .local-link-note {
+    padding: 4px 6px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    background: #fff;
+}
+
+body.win95-desktop .local-link-note[hidden],
+body.win95-desktop .local-link-expired[hidden],
+body.win95-desktop .local-link-canvas[hidden] {
+    display: none;
+}
+
+body.win95-desktop .local-link-qr {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    box-sizing: content-box;
+    width: 232px;
+    height: 232px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    background: #fff;
+}
+
+body.win95-desktop .local-link-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .local-link-expired {
+    color: #000;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+}
+
+body.win95-desktop .local-link-timer {
+    color: #000;
+    font-weight: bold;
+    text-align: center;
+}
+
+body.win95-desktop .local-link-address {
+    width: 100%;
+    color: #000;
+    font-size: 11px;
+}
+
+body.win95-desktop .local-link-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+body.win95-desktop .local-link-status,
+body.win95-desktop .local-link-phone-status {
+    flex: none;
+    padding: 3px 6px;
+    border-top: 1px solid #808080;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+}
+
+/* --- Téléphone -------------------------------------------------------------------------------- */
+body.win95-desktop.win95-phone-link {
+    overflow: hidden;
+}
+
+body.win95-desktop .local-link-phone {
+    position: fixed;
+    inset: 0;
+    z-index: 30000;
+    display: flex;
+    padding: 6px;
+    background: #008080;
+    color: #000;
+}
+
+body.win95-desktop .local-link-phone-window {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+body.win95-desktop .local-link-phone-window .window-title-bar {
+    flex: none;
+    cursor: default;
+}
+
+body.win95-desktop .local-link-phone-content {
+    flex: 1;
+    min-height: 0;
+    margin: 4px;
+    overflow: auto;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .local-link-phone-status {
+    margin: 0 4px 4px;
+}

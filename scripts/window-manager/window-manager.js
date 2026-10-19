@@ -23,6 +23,7 @@
                 { app: "calculator" },
                 { app: "clock" },
                 { app: "charmap" },
+                { app: "local-link" },
                 { app: "notepad" },
                 { app: "paint" },
                 { label: "Jeux", icon: FOLDER_ICON, items: [{ app: "minesweeper" }, { app: "solitaire" }, { app: "freecell" }, { app: "hearts" }] },
@@ -142,6 +143,7 @@
                 calculator: { label: "Calculatrice", icon: window.Win95Asset("assets/icons/calculator-0.png"), title: "Calculatrice", kind: "calculator" },
                 clock: { label: "Horloge", icon: window.Win95Asset("assets/icons/clock-1.png"), title: "Horloge", kind: "clock" },
                 charmap: { label: "Table des caractères", icon: window.Win95Asset("assets/icons/charmap-0.png"), title: "Table des caractères", kind: "charmap" },
+                "local-link": { label: "Connexion locale", icon: window.Win95Asset("assets/icons/mobile_phone-0.png"), title: "Connexion locale", kind: "local-link" },
                 minesweeper: { label: "Démineur", icon: window.Win95Asset("assets/icons/game_mine_1-0.png"), title: "Démineur", kind: "minesweeper" },
                 solitaire: { label: "Solitaire", icon: window.Win95Asset("assets/icons/game_solitaire-0.png"), title: "Solitaire", kind: "solitaire" },
                 freecell: { label: "FreeCell", icon: window.Win95Asset("assets/icons/game_freecell-0.png"), title: "FreeCell", kind: "freecell" },
@@ -194,6 +196,10 @@
             this.startButton = document.querySelector(".start-btn");
             this.startMenu = this.ensureStartMenu();
             this.ensureUserTray();
+            // Icône « Connexion locale » : fournie par la bibliothèque (module « local-link »), absente si le module est exclu.
+            if (window.Win95LocalLink) {
+                this.registerDesktopIcon({ app: "local-link" });
+            }
 
             this.setInitialStates();
             this.bindEvents();
@@ -1730,6 +1736,8 @@
                     return this.createToolWindow(appName, definition, { width: "260px", height: "300px", attach: (element) => window.Win95ClockApp?.attach?.(element) });
                 case "charmap":
                     return this.createToolWindow(appName, definition, { width: "480px", height: "400px", attach: (element) => window.Win95CharMap?.attach?.(element) });
+                case "local-link":
+                    return this.createToolWindow(appName, definition, { width: "340px", height: "500px", attach: (element) => window.Win95LocalLinkApp?.attach?.(element) });
                 case "minesweeper":
                     return this.createToolWindow(appName, definition, { width: "180px", height: "280px", attach: (element) => window.Win95Minesweeper?.attach?.(element) });
                 case "solitaire":

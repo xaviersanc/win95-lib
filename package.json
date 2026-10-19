@@ -1,10 +1,10 @@
 {
     "name": "win95-lib",
     "private": true,
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Un faux Windows 95 dans le navigateur (bureau, explorateur, applications, jeux, Panneau de configuration), sans framework ni build, avec stockage local, Supabase et Google Drive.",
     "scripts": {
-        "start": "python -m http.server 8000",
+        "start": "node tools/dev-server.mjs",
         "test": "node tests/run.mjs"
     },
     "devDependencies": {
