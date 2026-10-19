@@ -1,0 +1,352 @@
+body.win95-desktop .explorer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+}
+
+body.win95-desktop .explorer-menu-bar {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 2px 8px 3px;
+    font-size: 12px;
+    border-bottom: 1px solid #808080;
+    background: #c0c0c0;
+    color: #000;
+}
+
+body.win95-desktop .explorer-menu-bar span {
+    cursor: default;
+}
+
+body.win95-desktop .explorer-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-bottom: 1px solid #808080;
+    background: #c0c0c0;
+}
+
+body.win95-desktop .explorer-btn {
+    min-width: 26px;
+    padding: 3px 8px;
+    font-size: 12px;
+    line-height: 1;
+}
+
+body.win95-desktop .explorer-btn.small-label {
+    min-width: 54px;
+    padding: 3px 6px;
+}
+
+body.win95-desktop .explorer-address {
+    flex: 1;
+    min-width: 0;
+    height: 22px;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+body.win95-desktop .explorer-layout {
+    display: grid;
+    grid-template-columns: 25% 75%;
+    min-height: 0;
+    flex: 1;
+}
+
+body.win95-desktop .explorer-tree,
+body.win95-desktop .explorer-list {
+    min-height: 0;
+    overflow: auto;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+    padding: 6px;
+    border-right: 1px solid #808080;
+}
+
+body.win95-desktop .explorer-list {
+    border-right: 0;
+    border-left: 1px solid #fff;
+}
+
+body.win95-desktop .tree-node {
+    margin-bottom: 2px;
+    padding-left: 12px;
+    position: relative;
+}
+
+body.win95-desktop .tree-node::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 6px;
+    width: 6px;
+    height: 1px;
+    background: #808080;
+}
+
+body.win95-desktop .tree-button {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 12px;
+    padding: 1px 3px;
+    text-align: left;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+body.win95-desktop .tree-folder-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .tree-button span {
+    min-width: 0;
+}
+
+body.win95-desktop .tree-button.active {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .win95-form-group {
+    margin-bottom: 10px;
+}
+
+body.win95-desktop .win95-form-group label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+body.win95-desktop .win95-form-group .form-95 {
+    width: 100%;
+}
+
+body.win95-desktop .list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 12px;
+}
+
+body.win95-desktop .list-item {
+    border: 0;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2px;
+    width: 100%;
+    cursor: default;
+}
+
+body.win95-desktop .list-item:focus {
+    outline: 1px dotted #000;
+    outline-offset: -1px;
+}
+
+body.win95-desktop .list-item.selected span {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .list-item.selected .list-item-label {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .list-item img {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 5px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .list-item span,
+body.win95-desktop .list-item .list-item-label {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 1px 3px;
+    line-height: 1.1;
+    color: #000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.win95-desktop .list-grid.details-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+body.win95-desktop .list-grid.details-mode .list-item.details-item {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    align-items: center;
+    justify-items: start;
+    text-align: left;
+    gap: 6px;
+    padding: 2px 4px;
+}
+
+body.win95-desktop .list-grid.details-mode .list-item.details-item .list-item-icon {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+body.win95-desktop .list-grid.details-mode .list-item.details-item .list-item-label {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: none;
+    width: auto;
+}
+
+body.win95-desktop .list-separator {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: #bfbfbf;
+    border-top: 1px solid #808080;
+    border-bottom: 1px solid #ffffff;
+    padding: 4px 8px;
+    min-height: 22px;
+}
+
+body.win95-desktop .list-separator span {
+    font-weight: bold;
+    letter-spacing: 0.2px;
+}
+
+body.win95-desktop .explorer-status {
+    border-top: 1px solid #808080;
+    padding: 3px 56px 3px 6px;
+    background: #c0c0c0;
+    font-size: 12px;
+    color: #000;
+}
+
+body.win95-desktop .explorer-view-switch {
+    position: absolute;
+    right: 6px;
+    bottom: 3px;
+    display: flex;
+    gap: 2px;
+    z-index: 2;
+}
+
+body.win95-desktop .explorer-view-btn {
+    min-width: 20px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.win95-desktop .explorer-view-btn.active {
+    border-style: inset;
+}
+
+body.win95-desktop .explorer-view-icon {
+    display: block;
+    width: 12px;
+    height: 12px;
+    position: relative;
+}
+
+body.win95-desktop .explorer-view-icon.mosaic {
+    border: 1px solid #404040;
+}
+
+body.win95-desktop .explorer-view-icon.mosaic::before,
+body.win95-desktop .explorer-view-icon.mosaic::after {
+    content: "";
+    position: absolute;
+    background: #404040;
+}
+
+body.win95-desktop .explorer-view-icon.mosaic::before {
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    transform: translateX(-0.5px);
+}
+
+body.win95-desktop .explorer-view-icon.mosaic::after {
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    transform: translateY(-0.5px);
+}
+
+body.win95-desktop .explorer-view-icon.details {
+    border: 1px solid #404040;
+}
+
+body.win95-desktop .explorer-view-icon.details::before,
+body.win95-desktop .explorer-view-icon.details::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    height: 1px;
+    background: #404040;
+}
+
+body.win95-desktop .explorer-view-icon.details::before {
+    top: 4px;
+}
+
+body.win95-desktop .explorer-view-icon.details::after {
+    top: 8px;
+}
+/* Raccourcis rangés dans Mes documents : icône de la cible + calque flèche */
+body.win95-desktop .list-item .list-item-icon-wrap {
+    position: relative;
+    display: inline-block;
+    width: auto;
+    padding: 0;
+    overflow: visible;
+    background: transparent !important;
+}
+
+body.win95-desktop .list-item .list-item-icon-wrap .list-item-shortcut-overlay {
+    position: absolute;
+    left: -2px;
+    bottom: 5px;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+}
+
+body.win95-desktop .list-grid.details-mode .list-item-icon-wrap .list-item-shortcut-overlay {
+    left: -1px;
+    bottom: 0;
+    width: 9px;
+    height: 9px;
+}
+
+/* Boutons contextuels de la barre d'outils (Importer, Nouveau dossier, Vider la Corbeille) */
+body.win95-desktop .explorer-toolbar [hidden] {
+    display: none !important;
+}

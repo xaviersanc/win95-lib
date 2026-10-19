@@ -1,0 +1,70 @@
+body.win95-desktop .image-viewer-window {
+    top: 70px;
+    left: 740px;
+    width: 360px;
+    min-height: 280px;
+}
+
+body.win95-desktop .image-viewer-body {
+    height: calc(100% - 24px);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+body.win95-desktop .image-viewer-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-bottom: 1px solid #808080;
+    background: #c0c0c0;
+}
+
+body.win95-desktop .image-viewer-status {
+    margin-left: auto;
+    padding: 3px 6px;
+    border: 2px inset #d5d5d5;
+    font-size: 12px;
+    color: #000;
+    background: #fff;
+    min-width: 60px;
+    text-align: center;
+}
+
+body.win95-desktop .image-viewer-canvas {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #7f7f7f;
+    border-top: 1px solid #fff;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #808080;
+    border-bottom: 1px solid #808080;
+    margin: 6px;
+    margin-bottom: 0;
+    overflow: hidden;
+}
+
+body.win95-desktop .image-viewer-canvas img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+body.win95-desktop .image-viewer-canvas img[hidden],
+body.win95-desktop .image-viewer-empty[hidden] {
+    display: none;
+}
+
+body.win95-desktop .image-viewer-empty {
+    max-width: 80%;
+    padding: 6px 8px;
+    background: #c0c0c0;
+    color: #000;
+    border: 2px solid;
+    border-color: #fff #808080 #808080 #fff;
+    text-align: center;
+}

@@ -1,0 +1,216 @@
+body.win95-desktop .notepad-window {
+    top: 80px;
+    left: 420px;
+    width: 520px;
+    min-height: 320px;
+}
+
+body.win95-desktop .notepad-body {
+    height: calc(100% - 24px);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+body.win95-desktop .notepad-menu-bar {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 2px 8px 3px;
+    font-size: 12px;
+    border-bottom: 1px solid #808080;
+    background: #c0c0c0;
+    color: #000;
+}
+
+body.win95-desktop .notepad-menu-bar span {
+    cursor: default;
+}
+
+body.win95-desktop .notepad-editor {
+    flex: 1;
+    min-height: 0;
+    margin: 6px;
+    margin-bottom: 0;
+    width: auto;
+    resize: none;
+    padding: 6px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #000;
+    background: #fff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+body.win95-desktop .notepad-status {
+    border-top: 1px solid #808080;
+    padding: 3px 6px;
+    background: #c0c0c0;
+    font-size: 12px;
+    color: #000;
+}
+
+body.win95-desktop .notepad-menu-action {
+    min-width: 0;
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    font: inherit;
+    color: #000;
+    cursor: default;
+}
+
+body.win95-desktop .notepad-menu-action:hover,
+body.win95-desktop .notepad-menu-action:focus-visible {
+    background: #000080;
+    color: #fff;
+    outline: none;
+}
+
+body.win95-desktop .notepad-menu-action[hidden] {
+    display: none;
+}
+
+/* Texte mis en forme (markdown) et éditeur façon WordPad (scripts/services/win95-rich-text.js),
+   utilisés par le Bloc-notes/WordPad. */
+body.win95-desktop .win95-rich-text {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+body.win95-desktop .win95-rich-text h1,
+body.win95-desktop .win95-rich-text h2,
+body.win95-desktop .win95-rich-text h3 {
+    margin: 4px 0 2px;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+body.win95-desktop .win95-rich-text h1 {
+    font-size: 18px;
+}
+
+body.win95-desktop .win95-rich-text h2 {
+    font-size: 15px;
+}
+
+body.win95-desktop .win95-rich-text h3 {
+    font-size: 13px;
+}
+
+body.win95-desktop .win95-rich-text ul,
+body.win95-desktop .win95-rich-text ol {
+    margin: 2px 0;
+    padding-left: 22px;
+}
+
+body.win95-desktop .win95-rich-text hr {
+    margin: 6px 0;
+    border: 0;
+    border-top: 1px solid #808080;
+    border-bottom: 1px solid #fff;
+}
+
+body.win95-desktop .win95-rich-text code {
+    padding: 0 2px;
+    background: #e8e8e8;
+    font-family: "Courier New", monospace;
+}
+
+body.win95-desktop .win95-rich-text a {
+    color: #0000ee;
+    text-decoration: underline;
+}
+
+body.win95-desktop .win95-wordpad {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+body.win95-desktop .win95-wordpad[hidden] {
+    display: none;
+}
+
+body.win95-desktop .win95-wordpad-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 4px;
+    background: #c0c0c0;
+    border-bottom: 1px solid #808080;
+}
+
+body.win95-desktop .win95-wordpad-toolbar[hidden] {
+    display: none;
+}
+
+body.win95-desktop .win95-wordpad-style {
+    width: auto;
+    height: 22px;
+    font-size: 12px;
+}
+
+body.win95-desktop .win95-wordpad-btn {
+    min-width: 24px;
+    height: 22px;
+    padding: 0 6px;
+    font-size: 12px;
+    line-height: 1;
+}
+
+body.win95-desktop .win95-wordpad-btn.is-bold {
+    font-weight: bold;
+}
+
+body.win95-desktop .win95-wordpad-btn.is-italic {
+    font-style: italic;
+}
+
+body.win95-desktop .win95-wordpad-btn.is-underline {
+    text-decoration: underline;
+}
+
+body.win95-desktop .win95-wordpad-btn.is-strike {
+    text-decoration: line-through;
+}
+
+body.win95-desktop .win95-wordpad-separator {
+    width: 1px;
+    height: 18px;
+    margin: 0 3px;
+    background: #808080;
+    box-shadow: 1px 0 0 #fff;
+}
+
+body.win95-desktop .win95-wordpad-area {
+    flex: 1 1 auto;
+    min-height: 60px;
+    padding: 6px 8px;
+    overflow: auto;
+    background: #fff;
+    color: #000;
+    font-family: "Times New Roman", serif;
+    font-size: 14px;
+    line-height: 1.35;
+    outline: none;
+}
+
+/* Dans la fenêtre du Bloc-notes : même cadre que la zone de texte brut. */
+body.win95-desktop .notepad-wordpad {
+    flex: 1 1 auto;
+    margin: 6px 6px 0;
+    border: 2px inset #c0c0c0;
+}
+
+body.win95-desktop .notepad-editor[hidden] {
+    display: none;
+}

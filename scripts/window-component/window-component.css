@@ -1,0 +1,102 @@
+body.win95-desktop .desktop-window {
+    position: absolute;
+    top: 18px;
+    left: 150px;
+    width: 560px;
+    height: 360px;
+    min-width: 260px;
+    min-height: 180px;
+    z-index: 5;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+body.win95-desktop .mini-window {
+    position: absolute;
+    width: 240px;
+    z-index: 4;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+
+
+body.win95-desktop .window-resize-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 8px;
+    cursor: ns-resize;
+}
+
+body.win95-desktop .window-resize-handle {
+    position: absolute;
+    z-index: 15;
+    background: transparent;
+    user-select: none;
+    touch-action: none;
+    pointer-events: auto;
+}
+
+body.win95-desktop .window-resize-left {
+    top: 22px;
+    bottom: 8px;
+    left: 0;
+    width: 6px;
+    cursor: ew-resize;
+}
+
+body.win95-desktop .window-resize-right {
+    top: 22px;
+    bottom: 8px;
+    right: 0;
+    width: 6px;
+    cursor: ew-resize;
+}
+
+body.win95-desktop .window-resize-bottom {
+    left: 12px;
+    right: 12px;
+    bottom: 0;
+    height: 6px;
+    cursor: ns-resize;
+}
+
+body.win95-desktop .window-resize-top {
+    left: 12px;
+    right: 12px;
+    top: 0;
+    height: 6px;
+    cursor: ns-resize;
+}
+
+body.win95-desktop .window-resize-bottom-left {
+    left: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nesw-resize;
+}
+
+body.win95-desktop .window-resize-bottom-right {
+    right: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+}
+
+body.win95-desktop .mini-window .window-body {
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .mini-window .panel {
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    background: #bfbfbf;
+    padding: 8px;
+    text-align: center;
+}
+
+
+

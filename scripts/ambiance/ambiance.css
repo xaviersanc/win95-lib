@@ -1,0 +1,350 @@
+/* Ambiance : écran de démarrage, écran bleu, écran de veille, boîte « Fermer le programme ».
+   Les écrans de démarrage, bleu et de veille reproduisent des écrans plein cadre de Windows 95 : leurs couleurs
+   (texte clair sur fond sombre) sont l'exception documentée de la charte graphique (§1, règle 1). */
+
+/* --- Écran de démarrage ------------------------------------------------------------------- */
+.boot-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 40000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    color: #c0c0c0;
+    font-family: "Courier New", monospace;
+    font-size: 16px;
+    cursor: default;
+    opacity: 1;
+    transition: opacity 0.28s ease;
+}
+
+.boot-screen.is-leaving {
+    opacity: 0;
+}
+
+.boot-screen.is-splash {
+    background: #7cbde8 url("../../assets/clouds2.jpg") center / cover no-repeat;
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+}
+
+.boot-text {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    color: #c0c0c0;
+}
+
+.boot-text p {
+    margin: 0 0 4px;
+    color: #c0c0c0;
+}
+
+.boot-cursor {
+    animation: boot-blink 1s steps(1) infinite;
+}
+
+.boot-splash[hidden] {
+    display: none;
+}
+
+.boot-splash {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.boot-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 18vh;
+}
+
+.boot-brand {
+    margin-left: 6px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000040;
+}
+
+.boot-title {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: clamp(48px, 11vw, 110px);
+    font-style: italic;
+    font-weight: bold;
+    line-height: 1;
+    color: #fff;
+    text-shadow: 3px 3px 0 #000040;
+}
+
+.boot-95 {
+    margin-left: 10px;
+    color: #ff4040;
+    text-shadow: 3px 3px 0 #400000;
+}
+
+.boot-progress {
+    width: min(320px, 70vw);
+    height: 14px;
+    padding: 2px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    background: #c0c0c0;
+    overflow: hidden;
+}
+
+.boot-progress-bar {
+    display: block;
+    width: 40%;
+    height: 100%;
+    background: repeating-linear-gradient(90deg, #000080 0 8px, transparent 8px 10px);
+    animation: boot-slide 1.4s linear infinite;
+}
+
+.boot-caption {
+    margin: 10px 0 0;
+    color: #000;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 1px 8px;
+    font-size: 12px;
+}
+
+.boot-skip {
+    position: absolute;
+    bottom: 14px;
+    margin: 0;
+    font-size: 11px;
+    color: #808080;
+}
+
+.boot-screen.is-splash .boot-skip {
+    color: #000;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 1px 6px;
+}
+
+@keyframes boot-blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+@keyframes boot-slide {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(260%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .boot-cursor,
+    .boot-progress-bar {
+        animation: none;
+    }
+}
+
+/* --- Écran bleu ----------------------------------------------------------------------------------- */
+body.win95-desktop .bluescreen {
+    position: fixed;
+    inset: 0;
+    z-index: 50000;
+    box-sizing: border-box;
+    padding: 6vh 8vw;
+    background: #0000aa;
+    color: #fff;
+    font-family: "Lucida Console", "Courier New", monospace;
+    font-size: clamp(13px, 1.9vw, 18px);
+    line-height: 1.35;
+    overflow: auto;
+    cursor: default;
+}
+
+body.win95-desktop .bluescreen p {
+    max-width: 78ch;
+    margin: 0 0 1.1em;
+    color: #fff;
+}
+
+body.win95-desktop .bluescreen .bluescreen-title {
+    display: inline-block;
+    margin: 0 0 1.4em;
+    padding: 0 0.6em;
+    background: #aaa;
+    color: #0000aa;
+}
+
+/* --- Écran de veille ---------------------------------------------------------------------------------- */
+body.screensaver-on {
+    overflow: hidden;
+}
+
+.screensaver {
+    position: fixed;
+    inset: 0;
+    z-index: 45000;
+    background: #000;
+    cursor: none;
+}
+
+.screensaver canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.screensaver-lock {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 340px;
+    max-width: calc(100% - 16px);
+    margin: 0;
+    transform: translate(-50%, -50%);
+    cursor: default;
+}
+
+.screensaver-lock .screensaver-lock-body {
+    padding: 12px;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+}
+
+.screensaver-lock-text,
+.screensaver-lock-error {
+    margin: 0 0 8px;
+    color: #000;
+}
+
+.screensaver-lock-error {
+    min-height: 16px;
+    color: #a00000;
+    font-weight: bold;
+}
+
+.screensaver-lock-input {
+    width: 100%;
+    color: #000;
+}
+
+.screensaver-lock-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+/* Aperçu de l'écran de veille dans Propriétés de Affichage */
+body.win95-desktop .saver-preview-screen {
+    width: 220px;
+    height: 150px;
+    border: 10px solid #c0c0c0;
+    border-color: #dfdfdf #808080 #808080 #dfdfdf;
+    box-shadow: 0 0 0 1px #404040, inset 1px 1px 0 #404040;
+    background: #000;
+    box-sizing: content-box;
+}
+
+body.win95-desktop .saver-preview-screen canvas {
+    display: block;
+    width: 220px;
+    height: 150px;
+}
+
+body.win95-desktop .saver-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    color: #000;
+}
+
+body.win95-desktop .saver-row .form-95 {
+    margin-top: 0;
+    color: #000;
+}
+
+body.win95-desktop .saver-wait {
+    grid-template-columns: auto 64px auto;
+}
+
+body.win95-desktop .saver-wait label {
+    margin: 0;
+    color: #000;
+}
+
+/* --- Fermer le programme (Ctrl+Alt+Suppr) --------------------------------------------------------------------- */
+body.win95-desktop .closeprog {
+    z-index: 10000;
+}
+
+body.win95-desktop .closeprog-box {
+    width: 380px;
+    max-width: calc(100% - 16px);
+}
+
+body.win95-desktop .closeprog-body {
+    padding: 10px 12px;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .closeprog-body p {
+    margin: 0 0 6px;
+    color: #000;
+}
+
+body.win95-desktop .closeprog-list {
+    height: 150px;
+    overflow: auto;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+}
+
+body.win95-desktop .closeprog-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 1px 4px;
+    border: 0;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+    text-align: left;
+    cursor: default;
+}
+
+body.win95-desktop .closeprog-item.selected {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .closeprog-item:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -2px;
+}
+
+body.win95-desktop .closeprog-item img {
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .closeprog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 6px;
+}

@@ -1,0 +1,144 @@
+/* Jeux : Démineur, Solitaire, FreeCell, Cœurs. */
+
+/* --- Démineur ------------------------------------------------------------------------------------- */
+body.win95-desktop .ms {
+    display: inline-block;
+    padding: 6px;
+    background: #c0c0c0;
+    border: 3px solid;
+    border-color: #fff #808080 #808080 #fff;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body.win95-desktop .ms-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    padding: 4px 6px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+}
+
+body.win95-desktop .ms-counter {
+    min-width: 44px;
+    padding: 1px 3px;
+    background: #000;
+    color: #ff0000;
+    font: bold 22px "Courier New", monospace;
+    line-height: 26px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+body.win95-desktop .ms-face {
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    padding: 2px;
+    border: 2px solid;
+    border-color: #fff #404040 #404040 #fff;
+    background: #c0c0c0;
+}
+
+body.win95-desktop .ms-face:active {
+    border-color: #404040 #fff #fff #404040;
+}
+
+body.win95-desktop .ms-face canvas {
+    display: block;
+    width: 22px;
+    height: 22px;
+}
+
+body.win95-desktop .ms-grid {
+    display: grid;
+    width: max-content;
+    border: 3px solid;
+    border-color: #808080 #fff #fff #808080;
+}
+
+body.win95-desktop .ms-cell {
+    box-sizing: border-box;
+    width: 16px;
+    height: 16px;
+    border: 2px solid;
+    border-color: #fff #808080 #808080 #fff;
+    background: #c0c0c0 no-repeat center;
+    color: #000;
+    font: bold 12px "Courier New", monospace;
+    line-height: 12px;
+    text-align: center;
+    cursor: default;
+}
+
+body.win95-desktop .ms-cell.is-open {
+    border-width: 1px 0 0 1px;
+    border-color: #808080;
+}
+
+body.win95-desktop .ms-cell.n-1 { color: #0000ff; }
+body.win95-desktop .ms-cell.n-2 { color: #008000; }
+body.win95-desktop .ms-cell.n-3 { color: #ff0000; }
+body.win95-desktop .ms-cell.n-4 { color: #000080; }
+body.win95-desktop .ms-cell.n-5 { color: #800000; }
+body.win95-desktop .ms-cell.n-6 { color: #008080; }
+body.win95-desktop .ms-cell.n-7 { color: #000; }
+body.win95-desktop .ms-cell.n-8 { color: #808080; }
+
+body.win95-desktop .ms-cell.has-flag {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M6 1L2 3.5 6 6z' fill='%23f00'/%3E%3Cpath d='M6 6v4M3 11h6' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E");
+}
+
+body.win95-desktop .ms-cell.has-mine,
+body.win95-desktop .ms-cell.is-wrong {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='6' cy='6' r='3.2' fill='%23000'/%3E%3Cpath d='M6 0.5v11M0.5 6h11M2 2l8 8M10 2L2 10' stroke='%23000'/%3E%3Crect x='4.5' y='4.5' width='1.6' height='1.6' fill='%23fff'/%3E%3C/svg%3E");
+}
+
+body.win95-desktop .ms-cell.is-exploded {
+    background-color: #ff0000;
+}
+
+body.win95-desktop .ms-cell.is-wrong {
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M0 0L12 12M12 0L0 12' stroke='%23f00' stroke-width='1.6'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='6' cy='6' r='3.2' fill='%23000'/%3E%3Cpath d='M6 0.5v11M0.5 6h11' stroke='%23000'/%3E%3C/svg%3E");
+}
+
+/* --- Jeux de cartes --------------------------------------------------------------------------------- */
+body.win95-desktop .cards-frame {
+    display: inline-block;
+    background: #c0c0c0;
+}
+
+body.win95-desktop .cards-table {
+    display: block;
+    background: #008000;
+    cursor: default;
+    outline: none;
+}
+
+body.win95-desktop .cards-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 22px;
+    color: #000;
+}
+
+body.win95-desktop .hearts-message {
+    flex: 1;
+    color: #000;
+}
+
+body.win95-desktop .hearts-pass[hidden] {
+    display: none;
+}
+
+body.win95-desktop .hearts-pass {
+    min-width: 72px;
+    height: 20px;
+    padding: 0 8px;
+}

@@ -1,0 +1,293 @@
+/* Lecteur multimédia (Win95MediaPlayer) : affichage en creux, boutons en relief, curseur gradué, liste en creux. */
+body.win95-desktop .mp {
+    width: 392px;
+    padding: 8px 8px 0;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .mp-display {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+/* Afficheur : numéro de piste et temps, en grand, dans un cadre en creux. */
+body.win95-desktop .mp-lcd {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 112px;
+    margin: 0;
+    padding: 4px 6px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    background: #c0c0c0;
+    color: #000;
+    cursor: default;
+}
+
+body.win95-desktop .mp-track-no {
+    font: bold 13px "Courier New", monospace;
+    color: #000;
+}
+
+body.win95-desktop .mp-time {
+    font: bold 26px "Courier New", monospace;
+    line-height: 30px;
+    color: #000;
+}
+
+body.win95-desktop .mp-lcd:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -4px;
+}
+
+body.win95-desktop .mp-fields {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+body.win95-desktop .mp-field {
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    align-items: center;
+    gap: 4px;
+}
+
+body.win95-desktop .mp-field label {
+    margin: 0;
+    color: #000;
+}
+
+body.win95-desktop .mp-readout {
+    min-height: 20px;
+    padding: 1px 4px;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    color: #000;
+    line-height: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Curseur de position façon « trackbar » Windows 95 : rail en creux, poignée en relief, graduations. */
+body.win95-desktop .mp-seek-wrap {
+    margin: 8px 0 2px;
+    padding-bottom: 6px;
+    background: repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 10%) 6px 100% / calc(100% - 12px) 5px no-repeat;
+}
+
+body.win95-desktop .mp-seek {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 24px;
+    margin: 0;
+    background: transparent;
+    accent-color: initial;
+}
+
+body.win95-desktop .mp-seek::-webkit-slider-runnable-track,
+body.win95-desktop .mp-volume input::-webkit-slider-runnable-track {
+    height: 4px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    background: #c0c0c0;
+}
+
+body.win95-desktop .mp-seek::-moz-range-track,
+body.win95-desktop .mp-volume input::-moz-range-track {
+    height: 4px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    background: #c0c0c0;
+}
+
+body.win95-desktop .mp-seek::-webkit-slider-thumb,
+body.win95-desktop .mp-volume input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 11px;
+    height: 21px;
+    margin-top: -9px;
+    border: 2px solid;
+    border-color: #fff #404040 #404040 #fff;
+    border-radius: 0;
+    background: #c0c0c0;
+    box-shadow: inset -1px -1px 0 #808080;
+}
+
+body.win95-desktop .mp-seek::-moz-range-thumb,
+body.win95-desktop .mp-volume input::-moz-range-thumb {
+    width: 7px;
+    height: 17px;
+    border: 2px solid;
+    border-color: #fff #404040 #404040 #fff;
+    border-radius: 0;
+    background: #c0c0c0;
+    box-shadow: inset -1px -1px 0 #808080;
+}
+
+body.win95-desktop .mp-seek:disabled {
+    opacity: 0.6;
+}
+
+body.win95-desktop .mp-seek:focus-visible,
+body.win95-desktop .mp-volume input:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: 2px;
+}
+
+body.win95-desktop .mp-transport {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+body.win95-desktop .mp-buttons {
+    display: flex;
+    gap: 3px;
+}
+
+body.win95-desktop .mp-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 28px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    color: #000;
+}
+
+body.win95-desktop .mp-btn:disabled {
+    color: #808080;
+}
+
+body.win95-desktop .mp-btn:disabled svg {
+    filter: drop-shadow(1px 1px 0 #fff);
+}
+
+/* Bouton enfoncé : lecture ou pause en cours. */
+body.win95-desktop .mp-btn.is-active {
+    border-color: #404040 #fff #fff #404040;
+    background: #dfdfdf;
+    box-shadow: inset 1px 1px 0 #808080;
+}
+
+body.win95-desktop .mp-volume {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 120px;
+    margin: 0;
+}
+
+body.win95-desktop .mp-volume img {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .mp-volume input {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    background: transparent;
+}
+
+/* Liste de lecture : en-tête en relief, corps blanc en creux, piste courante en bleu marine. */
+body.win95-desktop .mp-list-wrap {
+    margin-bottom: 8px;
+}
+
+body.win95-desktop .mp-list-wrap[hidden] {
+    display: none;
+}
+
+body.win95-desktop .mp-list-head,
+body.win95-desktop .mp-row {
+    display: grid;
+    grid-template-columns: 38px 1fr 52px;
+    gap: 0;
+}
+
+body.win95-desktop .mp-list-head span {
+    padding: 1px 4px;
+    border: 2px solid;
+    border-color: #fff #404040 #404040 #fff;
+    background: #c0c0c0;
+    color: #000;
+    font-weight: bold;
+}
+
+body.win95-desktop .mp-list {
+    height: 110px;
+    overflow: auto;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+}
+
+body.win95-desktop .mp-row {
+    width: 100%;
+    margin: 0;
+    padding: 1px 0;
+    border: 0;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+    text-align: left;
+    cursor: default;
+}
+
+body.win95-desktop .mp-row span {
+    padding: 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.win95-desktop .mp-row.is-current {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .mp-row:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -2px;
+}
+
+body.win95-desktop .mp-empty {
+    padding: 6px;
+    color: #404040;
+}
+
+body.win95-desktop .mp-status {
+    margin: 0 -8px;
+}
+
+body.win95-desktop .mp-audio {
+    display: none;
+}

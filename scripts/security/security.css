@@ -1,0 +1,78 @@
+/* Écran d'ouverture de session et de premier démarrage (Win95Security). */
+body.win95-desktop.session-locked {
+    background: #008080;
+}
+
+body.win95-desktop.session-locked .desktop,
+body.win95-desktop.session-locked .taskbar,
+body.win95-desktop.session-locked [data-window-component],
+body.win95-desktop.session-locked [data-start-menu],
+body.win95-desktop.session-locked [data-logout-modal] {
+    display: none !important;
+}
+
+body.win95-desktop .security-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 30000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #008080;
+}
+
+body.win95-desktop .security-box {
+    width: 380px;
+    max-width: calc(100% - 16px);
+    margin: 0;
+}
+
+body.win95-desktop .security-body {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 8px 12px;
+    padding: 14px 12px 10px;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .security-icon {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .security-intro {
+    margin: 0 0 8px;
+    color: #000;
+}
+
+body.win95-desktop .security-field {
+    margin-bottom: 6px;
+}
+
+body.win95-desktop .security-field label {
+    display: block;
+    margin-bottom: 2px;
+    color: #000;
+}
+
+body.win95-desktop .security-input {
+    width: 100%;
+    color: #000;
+}
+
+body.win95-desktop .security-error {
+    grid-column: 1 / -1;
+    min-height: 16px;
+    margin: 0;
+    color: #a00000;
+    font-weight: bold;
+}
+
+body.win95-desktop .security-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+}

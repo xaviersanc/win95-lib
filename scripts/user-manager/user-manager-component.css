@@ -1,0 +1,172 @@
+/* Gestion des utilisateurs (Win95UserManager) : liste des comptes et formulaire d'édition. */
+body.win95-desktop .user-manager-body {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 24px);
+    padding: 0;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .user-manager-table-wrap {
+    flex: 1;
+    min-height: 0;
+    margin: 4px;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    overflow: auto;
+}
+
+body.win95-desktop .user-manager-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #000;
+}
+
+body.win95-desktop .user-manager-table th {
+    position: sticky;
+    top: 0;
+    padding: 2px 6px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #fff #404040 #404040 #fff;
+    color: #000;
+    font-weight: bold;
+    text-align: left;
+}
+
+body.win95-desktop .user-manager-table td {
+    padding: 2px 6px;
+    border-bottom: 1px solid #c0c0c0;
+    color: #000;
+    vertical-align: top;
+}
+
+body.win95-desktop .user-manager-table tr {
+    cursor: default;
+}
+
+body.win95-desktop .user-manager-table tr:focus {
+    outline: 1px dotted #000;
+    outline-offset: -1px;
+}
+
+/* Sélection façon Windows 95 : texte blanc sur bleu marine. */
+body.win95-desktop .user-manager-table tr.selected td {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .user-manager-form {
+    flex: 1;
+    min-height: 0;
+    padding: 8px 10px;
+    overflow: auto;
+}
+
+body.win95-desktop .user-manager-field {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+body.win95-desktop .user-manager-field label,
+body.win95-desktop .user-manager-app {
+    margin: 0;
+    color: #000;
+}
+
+body.win95-desktop .user-manager-apps {
+    margin: 8px 0;
+    padding: 4px 8px 6px;
+    border: 2px groove #fff;
+    color: #000;
+}
+
+body.win95-desktop .user-manager-apps legend {
+    width: auto;
+    margin: 0;
+    padding: 0 4px;
+    font-size: 12px;
+    color: #000;
+}
+
+body.win95-desktop .user-manager-app {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 0;
+}
+
+body.win95-desktop .user-manager-app img {
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .user-manager-note {
+    margin: 4px 0 0;
+    color: #404040;
+}
+
+body.win95-desktop .user-manager-error {
+    min-height: 16px;
+    margin: 0 0 4px;
+    color: #a00000;
+    font-weight: bold;
+}
+
+body.win95-desktop .user-manager-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+/* Case à cocher façon Windows 95 (win95.css masque les cases natives). */
+body.win95-desktop .user-manager-app input[type="checkbox"] {
+    position: static;
+    flex: none;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    display: inline-grid;
+    place-content: center;
+}
+
+body.win95-desktop .user-manager-app input[type="checkbox"]::before {
+    content: "";
+    width: 7px;
+    height: 4px;
+    border-left: 2px solid #000;
+    border-bottom: 2px solid #000;
+    transform: translateY(-1px) rotate(-45deg);
+    visibility: hidden;
+}
+
+body.win95-desktop .user-manager-app input[type="checkbox"]:checked::before {
+    visibility: visible;
+}
+
+body.win95-desktop .user-manager-app input[type="checkbox"]:disabled {
+    background: #c0c0c0;
+}
+
+body.win95-desktop .user-manager-app input[type="checkbox"]:disabled::before {
+    border-color: #808080;
+}
+
+body.win95-desktop .user-manager-app input[type="checkbox"]:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: 2px;
+}

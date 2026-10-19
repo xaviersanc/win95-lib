@@ -1,0 +1,659 @@
+/* Panneau de configuration et ses applets : feuille de propriétés, Date/Heure, Souris, Sons, Système, Ajout/Suppression. */
+
+/* --- Fenêtre du Panneau de configuration ------------------------------------------------ */
+body.win95-desktop .control-panel-body {
+    height: calc(100% - 24px);
+    padding: 0;
+}
+
+body.win95-desktop .control-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
+}
+
+body.win95-desktop .control-panel-icon {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+}
+
+/* --- Feuille de propriétés ---------------------------------------------------------------- */
+body.win95-desktop .property-window .title-bar-controls button:not([data-window-action="close"]) {
+    display: none;
+}
+
+body.win95-desktop .property-body {
+    height: calc(100% - 24px);
+    padding: 6px;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+}
+
+body.win95-desktop .property-sheet {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: #000;
+}
+
+body.win95-desktop .property-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    padding-left: 2px;
+    margin-bottom: -2px;
+    position: relative;
+    z-index: 1;
+}
+
+body.win95-desktop .property-tab {
+    margin: 0;
+    padding: 3px 8px;
+    border: 2px solid;
+    border-color: #fff #404040 transparent #fff;
+    background: #c0c0c0;
+    color: #000;
+    font-size: 12px;
+    cursor: default;
+}
+
+body.win95-desktop .property-tab.active {
+    padding-bottom: 5px;
+    margin-top: -2px;
+    font-weight: bold;
+}
+
+body.win95-desktop .property-tab:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -4px;
+}
+
+body.win95-desktop .property-panels {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 8px;
+    border: 2px solid;
+    border-color: #fff #404040 #404040 #fff;
+    background: #c0c0c0;
+    color: #000;
+}
+
+body.win95-desktop .property-panel[hidden] {
+    display: none;
+}
+
+body.win95-desktop .property-status {
+    min-height: 16px;
+    padding: 2px 4px;
+    color: #000;
+}
+
+body.win95-desktop .property-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    padding-top: 4px;
+}
+
+body.win95-desktop .property-group {
+    margin: 0 0 8px;
+    padding: 4px 8px 8px;
+    border: 2px groove #fff;
+    color: #000;
+}
+
+body.win95-desktop .property-group legend {
+    width: auto;
+    margin: 0;
+    padding: 0 4px;
+    font-size: 12px;
+    color: #000;
+}
+
+body.win95-desktop .property-note {
+    margin: 4px 0;
+    color: #404040;
+}
+
+/* --- Date/Heure ------------------------------------------------------------------------------ */
+body.win95-desktop .datetime-panel {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 8px;
+    align-items: start;
+}
+
+body.win95-desktop .datetime-panel .property-group {
+    margin: 0;
+}
+
+body.win95-desktop .datetime-date-controls {
+    display: grid;
+    grid-template-columns: 1fr 64px;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+body.win95-desktop .datetime-date-controls .form-95,
+body.win95-desktop .datetime-time-input,
+body.win95-desktop .datetime-zone-list {
+    margin-top: 0;
+    color: #000;
+}
+
+body.win95-desktop .datetime-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    padding: 2px;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+}
+
+body.win95-desktop .datetime-weekday {
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+}
+
+body.win95-desktop .datetime-day {
+    margin: 0;
+    padding: 1px 0;
+    border: 1px solid transparent;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+    text-align: center;
+    cursor: default;
+}
+
+body.win95-desktop .datetime-day.selected {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .datetime-day:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -2px;
+}
+
+body.win95-desktop .datetime-analog {
+    display: block;
+    margin: 0 auto 6px;
+}
+
+body.win95-desktop .datetime-time-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+body.win95-desktop .datetime-time-input {
+    width: 38px;
+    padding: 0 2px;
+    text-align: center;
+}
+
+body.win95-desktop .datetime-zone {
+    margin: 6px 0 0;
+    color: #404040;
+    font-size: 11px;
+    text-align: center;
+}
+
+body.win95-desktop .datetime-zone-list {
+    height: 220px;
+}
+
+/* --- Souris et Sons : curseurs de réglage --------------------------------------------------------- */
+body.win95-desktop .mouse-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+body.win95-desktop .mouse-header img {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .mouse-header p {
+    margin: 0;
+    color: #000;
+}
+
+body.win95-desktop .mouse-speed-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    color: #000;
+}
+
+body.win95-desktop .mouse-slider {
+    width: 100%;
+    accent-color: #000080;
+}
+
+body.win95-desktop .mouse-test-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    color: #000;
+}
+
+body.win95-desktop .mouse-test-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin: 0;
+    padding: 0;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    background: #fff;
+}
+
+body.win95-desktop .mouse-test-box.is-open {
+    background: #ffff80;
+}
+
+body.win95-desktop .mouse-test-box img {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .mouse-test-result {
+    flex: 1;
+    color: #000;
+}
+
+body.win95-desktop .mouse-schemes {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+}
+
+body.win95-desktop .mouse-scheme {
+    margin: 0;
+    padding: 2px 6px;
+    border: 0;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+    text-align: left;
+    cursor: default;
+}
+
+body.win95-desktop .mouse-scheme.selected {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .mouse-scheme:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -2px;
+}
+
+body.win95-desktop .mouse-cursor-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+    margin-top: 8px;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    color: #000;
+}
+
+/* Formes de pointeur (Win95Mouse) : appliquées au <body> et à la zone d'aperçu. */
+body.win95-desktop[data-cursor-scheme="large"],
+body.win95-desktop [data-cursor-scheme="large"] {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='38'%3E%3Cpath d='M1 1v28l7-7 5 12 5-2-5-12h10z' fill='%23fff' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 1 1, auto;
+}
+
+/* « standard » : le pointeur natif du système. */
+body.win95-desktop[data-cursor-scheme="cross"],
+body.win95-desktop [data-cursor-scheme="cross"] {
+    cursor: crosshair;
+}
+
+/* --- Sons ----------------------------------------------------------------------------------------- */
+body.win95-desktop .sound-events {
+    height: 150px;
+    overflow: auto;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+}
+
+body.win95-desktop .sound-event {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 1px 4px;
+    border: 0;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+    text-align: left;
+    cursor: default;
+}
+
+body.win95-desktop .sound-event.selected {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .sound-event:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -2px;
+}
+
+body.win95-desktop .sound-event-icon {
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .sound-name-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+body.win95-desktop .sound-name-row label {
+    margin: 0;
+    color: #000;
+}
+
+body.win95-desktop .sound-name-row .form-95,
+body.win95-desktop .property-group > .form-95 {
+    margin-top: 0;
+    color: #000;
+}
+
+body.win95-desktop .sound-preview {
+    min-width: 64px;
+}
+
+/* --- Système ------------------------------------------------------------------------------------------ */
+body.win95-desktop .system-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+body.win95-desktop .system-header img {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .system-intro p {
+    margin: 0;
+    color: #000;
+}
+
+body.win95-desktop .system-product {
+    font-weight: bold;
+}
+
+body.win95-desktop .system-line {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 6px;
+    padding: 1px 0;
+    color: #000;
+}
+
+body.win95-desktop .system-label {
+    color: #000;
+}
+
+body.win95-desktop .system-value {
+    color: #000;
+    overflow-wrap: anywhere;
+}
+
+body.win95-desktop .system-tree {
+    height: 250px;
+    overflow: auto;
+    padding: 2px;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    color: #000;
+}
+
+body.win95-desktop .system-node-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    margin: 0;
+    padding: 1px 2px;
+    border: 0;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+    text-align: left;
+    cursor: default;
+}
+
+body.win95-desktop .system-node-head:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -1px;
+}
+
+body.win95-desktop .system-node-head img {
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .system-toggle {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border: 1px solid #808080;
+    background: #fff;
+    color: #000;
+    font-size: 10px;
+    line-height: 9px;
+    text-align: center;
+}
+
+body.win95-desktop .system-children[hidden] {
+    display: none;
+}
+
+body.win95-desktop .system-child {
+    padding: 1px 2px 1px 40px;
+    color: #000;
+}
+
+body.win95-desktop .system-profiles {
+    height: 80px;
+    margin: 6px 0;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+}
+
+body.win95-desktop .system-profile {
+    padding: 1px 4px;
+    color: #000;
+}
+
+body.win95-desktop .system-profile.selected {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .system-profile-buttons {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+body.win95-desktop .system-profile-buttons .btn {
+    min-width: 0;
+    flex: 1;
+}
+
+body.win95-desktop .system-verdict {
+    margin: 8px 0 0;
+    font-weight: bold;
+    color: #000;
+}
+
+/* --- Ajout/Suppression de programmes ------------------------------------------------------------------------ */
+body.win95-desktop .programs-list,
+body.win95-desktop .programs-components {
+    height: 130px;
+    margin: 4px 0 6px;
+    overflow: auto;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    color: #000;
+}
+
+body.win95-desktop .programs-components {
+    height: 190px;
+}
+
+body.win95-desktop .programs-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 1px 4px;
+    border: 0;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+    text-align: left;
+    cursor: default;
+}
+
+body.win95-desktop .programs-item.selected {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .programs-item:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -2px;
+}
+
+body.win95-desktop .programs-item img,
+body.win95-desktop .property-check img {
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .programs-empty {
+    padding: 6px;
+    color: #404040;
+}
+
+body.win95-desktop .property-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 2px 4px;
+    color: #000;
+}
+
+body.win95-desktop .programs-name {
+    flex: 1;
+}
+
+body.win95-desktop .programs-size {
+    color: #404040;
+}
+
+body.win95-desktop .programs-description {
+    min-height: 32px;
+    margin: 0;
+    padding: 3px 4px;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    background: #c0c0c0;
+    color: #000;
+}
+
+body.win95-desktop .programs-disk-icon {
+    display: block;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
+    image-rendering: pixelated;
+}
+
+/* Case à cocher façon Windows 95 (win95.css masque les cases natives). */
+body.win95-desktop .property-check input[type="checkbox"] {
+    position: static;
+    flex: none;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+    display: inline-grid;
+    place-content: center;
+}
+
+body.win95-desktop .property-check input[type="checkbox"]::before {
+    content: "";
+    width: 7px;
+    height: 4px;
+    border-left: 2px solid #000;
+    border-bottom: 2px solid #000;
+    transform: translateY(-1px) rotate(-45deg);
+    visibility: hidden;
+}
+
+body.win95-desktop .property-check input[type="checkbox"]:checked::before {
+    visibility: visible;
+}
+
+body.win95-desktop .property-check input[type="checkbox"]:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: 2px;
+}
