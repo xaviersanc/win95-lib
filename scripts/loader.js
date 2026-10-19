@@ -15,9 +15,12 @@
     //   lu par l'explorateur et le gestionnaire de fenêtres) ; sans `before`, le plugin est chargé après toute la bibliothèque ;
     // - les plugins se branchent par l'API d'extension du gestionnaire de fenêtres (registerApp, registerStartMenuItem…) :
     //   ils peuvent être chargés après le démarrage du bureau.
+    // - MODE TÉLÉPHONE : une adresse contenant `?win95link=…` (QR code de l'application « Connexion locale ») ne charge que le noyau
+    //   (« core ») et le module « local-link » : pas de démarrage, de comptes ni de bureau, seulement la page de liaison du téléphone.
+    //   Les plugins y sont ignorés, sauf ceux déclarés `phone: true` (leur contenu s'accroche à Win95LocalLink.registerPhonePage) ;
     // Cette liste est LA référence de l'ordre de chargement : toute nouvelle application s'y ajoute (une seule fois).
 
-    const LIB_VERSION = "1.1.0";
+    const LIB_VERSION = "1.2.0";
     const SUPABASE_JS = {
         src: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js",
         integrity: "sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"
@@ -98,6 +101,12 @@
                 "scripts/control-panel/control-panel-component.js"
             ]
         },
+        {
+            id: "local-link",
+            apps: ["local-link"],
+            css: ["scripts/local-link/local-link.css"],
+            js: ["scripts/local-link/qr-code.js", "scripts/local-link/local-link-service.js", "scripts/local-link/local-link-component.js", "scripts/local-link/local-link-phone.js"]
+        },
         { id: "user-manager", apps: ["user-manager"], css: ["scripts/user-manager/user-manager-component.css"], js: ["scripts/user-manager/user-manager-component.js"] },
         { id: "security", css: ["scripts/security/security.css"], js: ["scripts/security/security-manager.js"] },
         { id: "window-manager", js: ["scripts/window-manager/window-manager.js", "scripts/window-component/window-component.js"] }
@@ -110,11 +119,14 @@
     const scriptPath = script?.src ? new URL(script.src, window.location.href).pathname : "";
     const libPath = (userConfig.libPath || scriptPath.replace(/scripts\/loader\.js$/, "")).replace(/\/*$/, "/");
     const exclude = new Set(userConfig.exclude || []);
+    // Mode téléphone (voir l'en-tête) : seuls ces modules sont chargés.
+    const PHONE_MODULES = ["core", "local-link"];
+    const phoneMode = !exclude.has("local-link") && new URLSearchParams(window.location.search).has("win95link");
     const version = `${LIB_VERSION}${userConfig.cacheBust ? `-${userConfig.cacheBust}` : ""}`;
 
     // La bibliothèque supabase-js n'est utile que si Supabase sert au stockage ou aux comptes.
     // (ignorée si la page a déjà fourni un global `supabase`, par exemple une version épinglée par le projet ou un faux client de test).
-    const needsSupabase = Boolean(userConfig.supabase?.url) && !window.supabase?.createClient
+    const needsSupabase = !phoneMode && Boolean(userConfig.supabase?.url) && !window.supabase?.createClient
         && (["supabase", "supabase+drive"].includes(userConfig.storage?.provider) || userConfig.accounts?.provider === "supabase");
 
     // Chemin d'une ressource de la bibliothèque (icônes, fonds) : tout le code de la bibliothèque passe par là, ce qui lui permet
@@ -155,7 +167,7 @@
 
     // Un identifiant de module, un chemin ou un nom de fichier (« accounts-store.js ») dans `exclude` retire l'élément.
     const isExcluded = (path) => exclude.has(path) || exclude.has(path.split("/").pop());
-    const modules = MODULES.filter((module) => !exclude.has(module.id)).map((module) => ({
+    const modules = MODULES.filter((module) => !exclude.has(module.id) && (!phoneMode || PHONE_MODULES.includes(module.id))).map((module) => ({
         ...module,
         css: (module.css || []).filter((path) => !isExcluded(path)),
         js: (module.js || []).filter((path) => !isExcluded(path))
@@ -166,7 +178,9 @@
     }
     modules.forEach((module) => (module.css || []).forEach((path) => addStyle(versioned(resolveLib(path)))));
 
-    const allPlugins = (userConfig.plugins || []).map(asPlugin);
+    // En mode téléphone, seuls les plugins `phone: true` sont chargés (après la bibliothèque, sans `before`).
+    const projectPlugins = (userConfig.plugins || []).map(asPlugin).filter((plugin) => !phoneMode || plugin.phone === true);
+    const allPlugins = phoneMode ? [] : projectPlugins;
     const pending = [];
     // supabase-js avant les modules de stockage.
     if (needsSupabase) {
@@ -188,7 +202,7 @@
 
     window.Win95Ready = Promise.all(pending)
         .then(() => {
-            const plugins = (window.Win95Config?.plugins || []).map(asPlugin).filter((plugin) => !plugin.before);
+            const plugins = projectPlugins.filter((plugin) => phoneMode || !plugin.before);
             plugins.forEach((plugin) => plugin.css && addStyle(plugin.css));
             return Promise.all(plugins.filter((plugin) => plugin.src).map((plugin) => addScript(plugin.src, pluginAttributes(plugin))));
         })
@@ -199,5 +213,5 @@
 
     // Applications des modules exclus : masquées et refusées (menu Démarrer, droits, Ajout/Suppression de programmes).
     const disabledApps = MODULES.filter((module) => exclude.has(module.id)).flatMap((module) => module.apps || []);
-    window.Win95Loader = { MODULES, version: LIB_VERSION, libPath, disabledApps };
+    window.Win95Loader = { MODULES, version: LIB_VERSION, libPath, disabledApps, phoneMode };
 })();

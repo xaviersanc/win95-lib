@@ -18,6 +18,7 @@
         { key: "calculator", label: "Calculatrice", icon: window.Win95Asset("assets/icons/calculator-0.png"), size: "0,10 Mo", description: "Calculatrice standard et scientifique." },
         { key: "clock", label: "Horloge", icon: window.Win95Asset("assets/icons/clock-1.png"), size: "0,05 Mo", description: "Horloge analogique ou numérique." },
         { key: "charmap", label: "Table des caractères", icon: window.Win95Asset("assets/icons/charmap-0.png"), size: "0,07 Mo", description: "Copie des caractères spéciaux et symboles." },
+        { key: "local-link", label: "Connexion locale", icon: window.Win95Asset("assets/icons/mobile_phone-0.png"), size: "0,05 Mo", description: "Relie cet ordinateur à votre téléphone par un QR code temporaire." },
         { key: "minesweeper", label: "Démineur", icon: window.Win95Asset("assets/icons/game_mine_1-0.png"), size: "0,20 Mo", description: "Jeu de réflexion : trouvez les mines." },
         { key: "solitaire", label: "Solitaire", icon: window.Win95Asset("assets/icons/game_solitaire-0.png"), size: "0,50 Mo", description: "Le jeu de cartes Klondike." },
         { key: "freecell", label: "FreeCell", icon: window.Win95Asset("assets/icons/game_freecell-0.png"), size: "0,45 Mo", description: "Jeu de cartes à donnes numérotées." },

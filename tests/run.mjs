@@ -563,6 +563,245 @@ test("ambiance : clic droit bloqué, Ctrl+Alt+Suppr, écran bleu, écran de veil
     await page.waitForFunction(() => !window.Win95ScreenSaver.isActive());
 });
 
+// --- 8. Connexion locale (téléphone) ------------------------------------------------------------------------
+
+test("QR code : structure normalisée (viseurs, synchronisation, format), capacité, relecture si le navigateur sait lire un QR code", async (page) => {
+    await open(page);
+    await createAdmin(page);
+    const r = await page.evaluate(async () => {
+        const out = { versions: [], structure: [], format: [], tooLong: null, deterministic: null, decoded: "indisponible" };
+        const texts = ["a", "a".repeat(14), "a".repeat(15), "https://exemple.fr/?win95link=ABCDEFGHJKLMNPQRSTUV&exp=1767225600000", "é".repeat(60), "x".repeat(213)];
+        for (const text of texts) {
+            const qr = window.Win95QR.encode(text);
+            out.versions.push([qr.version, qr.size === qr.version * 4 + 17]);
+            const m = qr.modules;
+            const finder = (x, y) => [0, 1, 2, 3, 4, 5, 6].every((i) => m[y][x + i] && m[y + 6][x + i] && m[y + i][x] && m[y + i][x + 6]) && !m[y + 1][x + 1] && m[y + 2][x + 2] && m[y + 3][x + 3];
+            const timing = Array.from({ length: qr.size - 16 }, (_, i) => m[6][8 + i] === (i % 2 === 0) && m[8 + i][6] === (i % 2 === 0)).every(Boolean);
+            out.structure.push(finder(0, 0) && finder(qr.size - 7, 0) && finder(0, qr.size - 7) && timing && m[qr.size - 8][8] === true);
+            // Format : deux copies identiques, mot BCH valide (reste nul après démasquage), niveau M, masque annoncé.
+            const a = [];
+            for (let i = 0; i <= 5; i += 1) a[i] = m[i][8];
+            a[6] = m[7][8]; a[7] = m[8][8]; a[8] = m[8][7];
+            for (let i = 9; i < 15; i += 1) a[i] = m[8][14 - i];
+            const b = [];
+            for (let i = 0; i < 8; i += 1) b[i] = m[8][qr.size - 1 - i];
+            for (let i = 8; i < 15; i += 1) b[i] = m[qr.size - 15 + i][8];
+            const toNumber = (bits) => bits.reduce((n, bit, i) => n | ((bit ? 1 : 0) << i), 0);
+            const word = toNumber(a) ^ 0x5412;
+            let rem = word;
+            for (let i = 14; i >= 10; i -= 1) if ((rem >>> i) & 1) rem ^= 0x537 << (i - 10);
+            out.format.push([toNumber(a) === toNumber(b), rem === 0, (word >>> 13) === 0, ((word >>> 10) & 7) === qr.mask]);
+        }
+        try { window.Win95QR.encode("x".repeat(214)); } catch (error) { out.tooLong = error.message; }
+        out.deterministic = JSON.stringify(window.Win95QR.encode("abc").modules) === JSON.stringify(window.Win95QR.encode("abc").modules);
+        if (typeof window.BarcodeDetector === "function") {
+            try {
+                const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+                const text = "https://exemple.fr/?win95link=ABCDEFGHJKLMNPQRSTUV&exp=1767225600000";
+                const canvas = window.Win95QR.draw(document.createElement("canvas"), window.Win95QR.encode(text), { scale: 6 });
+                const found = await detector.detect(canvas);
+                out.decoded = found[0]?.rawValue === text ? "ok" : `échec : ${found[0]?.rawValue}`;
+            } catch {
+                out.decoded = "indisponible";
+            }
+        }
+        return out;
+    });
+    equal(r.versions, [[1, true], [1, true], [2, true], [5, true], [7, true], [10, true]], "versions choisies selon la longueur (octets UTF-8)");
+    equal(r.structure, [true, true, true, true, true, true], "viseurs, synchronisation et module noir fixe");
+    assert(r.format.every((checks) => checks.every(Boolean)), `informations de format (deux copies, BCH, niveau M, masque) : ${JSON.stringify(r.format)}`);
+    assert(/trop long/.test(r.tooLong || ""), "un texte de plus de 213 octets est refusé");
+    assert(r.deterministic, "même texte, même code");
+    assert(r.decoded === "indisponible" || r.decoded === "ok", `le code produit est relu par le navigateur : ${r.decoded}`);
+    console.log(`       (relecture du QR code par le navigateur : ${r.decoded})`);
+});
+
+test("connexion locale : icône, menu Démarrer, session temporaire, QR code, renouvellement, fermeture", async (page) => {
+    await open(page);
+    await createAdmin(page);
+    const base = await page.evaluate(() => ({
+        icon: Boolean(document.querySelector(".desktop-icon[data-desktop-app='local-link']")),
+        menu: Boolean(document.querySelector(".start-menu [data-app-name='local-link']")),
+        removable: window.Win95Programs.PROGRAMS.some((p) => p.key === "local-link"),
+        session: window.Win95LocalLink.getSession()
+    }));
+    equal([base.icon, base.menu, base.removable, base.session], [true, true, true, null], "icône du bureau, menu Démarrer, programme supprimable, pas de session au repos");
+
+    await page.dblclick(".desktop-icon[data-desktop-app='local-link']");
+    await page.waitForSelector("[data-window-app='local-link'] .local-link-canvas");
+    const first = await page.evaluate(() => {
+        const session = window.Win95LocalLink.getSession();
+        const canvas = document.querySelector(".local-link-canvas");
+        const pixels = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
+        let dark = 0;
+        for (let i = 0; i < pixels.length; i += 4) if (pixels[i] === 0) dark += 1;
+        return {
+            token: session.token, url: session.url, address: document.querySelector(".local-link-address").value,
+            darkRatio: dark / (canvas.width * canvas.height), timer: document.querySelector(".local-link-timer").textContent,
+            note: !document.querySelector(".local-link-note").hidden, ttl: session.expiresAt - session.createdAt,
+            stored: Object.keys(localStorage).concat(Object.keys(sessionStorage)).some((k) => k.includes(session.token))
+        };
+    });
+    assert(/^[A-Z2-9]{20}$/.test(first.token), `jeton de 20 caractères : ${first.token}`);
+    assert(first.url.includes(`win95link=${first.token}`) && /exp=\d{13}/.test(first.url), `adresse du QR code : ${first.url}`);
+    equal(first.address, first.url, "le champ d'adresse montre l'adresse du QR code");
+    assert(first.darkRatio > 0.2 && first.darkRatio < 0.6, `le QR code est dessiné (part de noir ${first.darkRatio})`);
+    assert(/^Ce code expire dans 0[45]:\d\d$/.test(first.timer), `compte à rebours : ${first.timer}`);
+    equal([first.note, first.ttl, first.stored], [true, 300000, false], "avertissement localhost, durée de 5 minutes, session jamais écrite sur disque");
+
+    await page.click(".local-link-actions .start-btn");
+    const second = await page.evaluate(() => window.Win95LocalLink.getSession().token);
+    assert(second !== first.token, "« Nouveau code » remplace le jeton");
+    assert((await page.inputValue(".local-link-address")).includes(second), "l'adresse affichée suit le nouveau code");
+
+    // Échéance : la session disparaît, la fenêtre l'annonce.
+    await page.evaluate(() => window.Win95LocalLink.createSession({ ttlMs: 400 }));
+    await page.waitForFunction(() => document.querySelector(".local-link-expired") && !document.querySelector(".local-link-expired").hidden);
+    equal(await page.evaluate(() => window.Win95LocalLink.getSession()), null, "la session expirée est retirée");
+    assert(/expiré/.test(await page.textContent(".local-link-timer")), "message d'expiration");
+    assert(await page.locator(".local-link-canvas").isHidden(), "le QR code expiré n'est plus affiché");
+
+    // Fermer la fenêtre ferme la session ; une déconnexion aussi.
+    await page.click(".local-link-actions .start-btn");
+    assert(await page.evaluate(() => Boolean(window.Win95LocalLink.getSession())), "nouvelle session après expiration");
+    await page.click("[data-window-app='local-link'] [data-window-action='close']");
+    equal(await page.evaluate(() => window.Win95LocalLink.getSession()), null, "fermeture de la fenêtre = fin de session");
+    await page.evaluate(() => { window.Win95LocalLink.createSession(); window.dispatchEvent(new CustomEvent("win95:auth-logout")); });
+    equal(await page.evaluate(() => window.Win95LocalLink.getSession()), null, "déconnexion = fin de session");
+
+    // L'échéance prévient les écouteurs même sans fenêtre ouverte.
+    const notified = await page.evaluate(() => new Promise((resolve) => {
+        window.addEventListener("win95:local-link-changed", (event) => { if (event.detail.session === null) resolve(true); });
+        window.Win95LocalLink.createSession({ ttlMs: 200 });
+        window.setTimeout(() => resolve(false), 1500);
+    }));
+    assert(notified, "l'événement win95:local-link-changed (session null) est émis à l'échéance");
+
+    // Serveur de développement : l'adresse réseau fournie remplace localhost dans le QR code (le PC reste sur localhost).
+    const dev = await page.evaluate(() => {
+        window.Win95DevServer = { lanUrl: "http://192.168.1.26:8000/" };
+        const session = window.Win95LocalLink.createSession();
+        return { url: session.url, unreachable: window.Win95LocalLink.isUnreachableFromPhone() };
+    });
+    assert(dev.url.startsWith("http://192.168.1.26:8000/index.html?win95link="), `adresse réseau du serveur de développement : ${dev.url}`);
+    equal(dev.unreachable, false, "plus d'avertissement avec l'adresse réseau du serveur de développement");
+    await page.evaluate(() => { delete window.Win95DevServer; });
+
+    // Adresse joignable configurée : plus d'avertissement.
+    const reachable = await page.evaluate(() => {
+        window.Win95Config.localLink.baseUrl = "https://exemple.fr/app/?x=1#y";
+        const session = window.Win95LocalLink.createSession();
+        return { url: session.url, unreachable: window.Win95LocalLink.isUnreachableFromPhone() };
+    });
+    assert(reachable.url.startsWith("https://exemple.fr/app/?win95link="), `baseUrl configurée : ${reachable.url}`);
+    equal(reachable.unreachable, false, "adresse réseau joignable");
+});
+
+test("connexion locale : exclure le module retire l'icône et l'application", async (page) => {
+    await open(page, { config: { exclude: ["local-link"] } });
+    await createAdmin(page);
+    const r = await page.evaluate(() => ({
+        icon: Boolean(document.querySelector(".desktop-icon[data-desktop-app='local-link']")),
+        service: typeof window.Win95LocalLink, refused: window.Win95Security.canOpenApp("local-link")
+    }));
+    equal([r.icon, r.service, r.refused], [false, "undefined", false], "module exclu : ni icône, ni service, application refusée");
+});
+
+test("connexion locale : page du téléphone (mode téléphone, page vide, code expiré ou invalide, plugin phone)", async (page) => {
+    const token = "ABCDEFGHJKLMNPQRSTUV";
+    const config = { appName: "Projet test", plugins: ["tests/fixtures/plugin.js", { src: "tests/fixtures/phone-plugin.js", phone: true }] };
+    // Page vide : le plugin phone n'est ajouté que pour la dernière vérification.
+    await page.addInitScript((json) => { window.Win95Config = JSON.parse(json); }, JSON.stringify({ appName: "Projet test", plugins: ["tests/fixtures/plugin.js"] }));
+    await page.goto(`${origin}/index.html?win95link=${token}&exp=${Date.now() + 60000}`);
+    await page.waitForSelector(".local-link-phone");
+    const r = await page.evaluate(() => ({
+        title: document.querySelector(".local-link-phone .title-bar-text").textContent,
+        content: document.querySelector("[data-local-link-phone-content]").textContent, children: document.querySelector("[data-local-link-phone-content]").children.length,
+        status: document.querySelector("[data-local-link-phone-status]").textContent,
+        desktop: typeof window.Win95WindowManager, security: typeof window.Win95Security, accounts: typeof window.Win95Accounts,
+        login: Boolean(document.querySelector(".security-screen")), boot: Boolean(document.querySelector(".boot-screen")),
+        phoneMode: window.Win95Loader.phoneMode, project: typeof window.__plugin,
+        color: getComputedStyle(document.querySelector("[data-local-link-phone-content]")).color
+    }));
+    equal([r.title, r.content, r.children], ["Connexion locale - Projet test", "", 0], "fenêtre Windows 95 au nom du projet, contenu vide");
+    assert(/^Page de liaison vide pour le moment\. Code valable encore 0[01]:\d\d\.$/.test(r.status), `barre d'état : ${r.status}`);
+    equal([r.desktop, r.security, r.accounts, r.login, r.boot, r.phoneMode, r.project], ["undefined", "undefined", "undefined", false, false, true, "undefined"], "seul le noyau est chargé : ni bureau, ni comptes, ni démarrage, ni plugin ordinaire");
+    equal(r.color, "rgb(0, 0, 0)", "texte noir (charte)");
+
+    // Code expiré, code invalide.
+    await page.goto(`${origin}/index.html?win95link=${token}&exp=${Date.now() - 1000}`);
+    await page.waitForSelector(".local-link-phone");
+    assert(/a expiré/.test(await page.textContent("[data-local-link-phone-status]")), "code expiré signalé");
+    await page.goto(`${origin}/index.html?win95link=abc`);
+    await page.waitForSelector(".local-link-phone");
+    assert(/non valable/.test(await page.textContent("[data-local-link-phone-status]")), "code invalide signalé");
+
+    // Plugin du projet déclaré phone: true : seul lui est chargé, il remplit la page.
+    const context = await page.context().browser().newContext({ viewport: { width: 390, height: 780 } });
+    const second = await context.newPage();
+    await second.addInitScript((json) => { window.Win95Config = JSON.parse(json); }, JSON.stringify(config));
+    await second.goto(`${origin}/index.html?win95link=${token}&exp=${Date.now() + 60000}`);
+    await second.waitForFunction(() => window.__phone?.mounted === 1);
+    const p = await second.evaluate(() => ({
+        content: document.querySelector("[data-local-link-phone-content]").textContent, status: document.querySelector("[data-local-link-phone-status]").textContent,
+        context: window.__phone.context, ordinary: typeof window.__plugin,
+        overflow: document.documentElement.scrollWidth > window.innerWidth
+    }));
+    equal([p.content, p.status, p.ordinary, p.overflow], ["Contenu du projet", "Projet prêt.", "undefined", false], "contenu du plugin phone, plugin ordinaire ignoré, pas de débordement sur 390 px");
+    equal(p.context, { token, appName: "Projet test" }, "contexte transmis au plugin");
+    await context.close();
+
+    // Sans le paramètre, la même page reste le bureau.
+    await page.addInitScript(() => { window.Win95Config = {}; });
+    await page.goto(`${origin}/index.html?noboot`);
+    await page.waitForSelector(".security-screen");
+    equal(await page.evaluate(() => [Boolean(document.querySelector(".local-link-phone")), window.Win95Loader.phoneMode]), [false, false], "sans paramètre : bureau normal");
+});
+
+test("serveur de développement : adresse réseau détectée, fichiers servis, accès hors dossier refusé, QR de terminal", async () => {
+    const { spawn } = await import("node:child_process");
+    const { findLanAddress, terminalQr } = await import(`file:///${path.join(root, "tools/dev-server.mjs").replace(/\\/g, "/")}`);
+    equal(findLanAddress({
+        lo: [{ family: "IPv4", internal: true, address: "127.0.0.1" }],
+        "vEthernet (WSL)": [{ family: "IPv4", internal: false, address: "172.20.0.1" }],
+        Ethernet: [{ family: "IPv4", internal: false, address: "10.0.0.5" }],
+        "Wi-Fi": [{ family: "IPv4", internal: false, address: "192.168.1.20" }, { family: "IPv6", internal: false, address: "fe80::1" }]
+    }), "192.168.1.20", "carte Wi-Fi privée préférée, cartes virtuelles et loopback ignorées");
+    equal(findLanAddress({ lo: [{ family: "IPv4", internal: true, address: "127.0.0.1" }] }), null, "aucun réseau : null");
+    assert(terminalQr("http://192.168.1.20:8000/").includes("\u001b[30;40m"), "QR de terminal en couleurs ANSI");
+
+    const child = spawn(process.execPath, [path.join(root, "tools/dev-server.mjs"), "--port", "0", "--no-open"], { cwd: root });
+    try {
+        const output = await new Promise((resolve, reject) => {
+            let text = "";
+            const timer = setTimeout(() => reject(new Error(`le serveur n'a pas démarré : ${text}`)), 8000);
+            child.stdout.on("data", (chunk) => { text += chunk; if (text.includes("Ctrl+C")) { clearTimeout(timer); resolve(text); } });
+            child.on("error", reject);
+        });
+        const port = /Local\s+: http:\/\/localhost:(\d+)\//.exec(output)?.[1];
+        assert(port, `adresse locale affichée : ${output}`);
+        assert(/Réseau\s+: (http:\/\/\d+\.\d+\.\d+\.\d+:\d+\/|aucune adresse)/.test(output), "adresse réseau (ou message) affichée");
+        // (fetch est remplacé par un test précédent : requêtes par node:http)
+        const get = (route) => new Promise((resolve, reject) => {
+            http.get({ host: "127.0.0.1", port, path: route }, (response) => {
+                let body = "";
+                response.on("data", (chunk) => { body += chunk; });
+                response.on("end", () => resolve({ status: response.statusCode, type: response.headers["content-type"], body }));
+            }).on("error", reject);
+        });
+        const index = await get("/");
+        equal([index.status, index.body.includes("scripts/loader.js")], [200, true], "index.html servi");
+        assert(/<head>\s*<script>window\.Win95DevServer = \{"lanUrl":/.test(index.body), "adresse réseau injectée en tête de la page HTML");
+        const asset = await get("/assets/icons/mobile_phone-0.png");
+        equal([asset.status, asset.type], [200, "image/png"], "ressource servie avec son type");
+        equal((await get("/inexistant.js")).status, 404, "fichier inconnu : 404");
+        const escape = (await get("/..%2f..%2fwindows%2fwin.ini")).status;
+        assert(escape === 403 || escape === 404, `accès hors dossier refusé (${escape})`);
+    } finally {
+        child.kill();
+    }
+});
+
 // --- Exécution --------------------------------------------------------------------------------------------------
 
 let failed = 0;

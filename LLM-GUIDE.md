@@ -66,6 +66,7 @@ scripts/window-component/          comportement d'une fenêtre (déplacer, redim
 scripts/file-explorer/             explorateur (Mes documents, Corbeille)
 scripts/notepad|paint|image-viewer|media-player|display-properties|user-manager/   applications
 scripts/accessories/              calculator, clock (Win95ClockApp), charmap
+scripts/local-link/               Connexion locale : qr-code.js (Win95QR), local-link-service.js (Win95LocalLink), local-link-component.js (fenêtre PC), local-link-phone.js (page du téléphone)
 scripts/games/                    cards.js (Win95Cards : paquet, sprites, cascade), minesweeper, solitaire, freecell, hearts — chacun expose Engine (règles sans interface) + attach
 scripts/ambiance/                 boot-screen (démarrage), screensaver + screensaver-effects (écrans de veille), blue-screen, close-program (Ctrl+Alt+Suppr)
 scripts/control-panel/             Panneau de configuration + applets (date-time, mouse, sounds, system, add-remove) + property-sheet.js (onglets OK/Annuler/Appliquer)
@@ -104,7 +105,7 @@ Chaque composant = `scripts/<nom>/<nom>-component.js` + `.css`, exposé sur `win
    `Win95Security.purgeUserData(id)` efface tout ce qui se termine par `.<id>` et la base IndexedDB : **toute nouvelle clé par compte doit se terminer par `.<id>`** pour être purgée.
 4. **Événements custom** (sur `window`, sauf mention) :
    `win95:auth-changed` (session ouverte), `win95:auth-logout`, `win95:accounts-changed`, `win95:user-files-changed`, `win95:recycle-bin-changed`,
-   `win95:document-shortcuts-changed`, `win95:wallpaper-changed`, `win95:clock-changed`, `win95:sounds-changed`, `win95:mouse-changed`, `win95:programs-changed`, `win95:screensaver-changed`, `win95:boot-done`, `win95:bluescreen-shown` ; sur l'**élément fenêtre** : `win95:window-closing` (annulable : `preventDefault()` refuse la fermeture, ex. document non
+   `win95:document-shortcuts-changed`, `win95:wallpaper-changed`, `win95:clock-changed`, `win95:sounds-changed`, `win95:mouse-changed`, `win95:programs-changed`, `win95:screensaver-changed`, `win95:local-link-changed`, `win95:local-link-phone-ready`, `win95:boot-done`, `win95:bluescreen-shown` ; sur l'**élément fenêtre** : `win95:window-closing` (annulable : `preventDefault()` refuse la fermeture, ex. document non
    enregistré) et `win95:window-closed` (**toujours y retirer ses écouteurs globaux** : `window.addEventListener(...)` sans nettoyage = fuite et double rendu).
 5. **Les stores sont des singletons réactifs** : toute mutation émet son événement ; les vues écoutent l'événement et se redessinent, elles ne se rafraîchissent pas elles-mêmes à la main.
 6. **Résultats d'opérations** : les stores renvoient `{ ok, message, … }` avec un message français prêt à afficher dans la barre d'état. Ne pas lever d'exception pour une erreur attendue.
@@ -118,7 +119,7 @@ Une page n'inclut que `scripts/loader.js` (après une configuration facultative)
 toute nouvelle application ou tout nouveau service s'y ajoute (une seule fois, au bon rang) ; `index.html` n'a jamais à être modifié pour cela. Ordre actuel, par identifiant de module :
 `boot` → `core` (context-guard, tray-clock, zoom-guard, **win95-config**, registre, utils, drag-drop) → `storage` → `services` (accounts, clock, sound, mouse, programs, recycle-bin, wallpaper,
 document-shortcuts, context-menu, menu-bar, dialog, rich-text, user-files) → `media-player` → `image-viewer` → `notepad` → `paint` → `explorer` → `control-panel` (property-sheet) →
-`accessories` → `games` → `ambiance` → `control-panel-applets` → `user-manager` → `security` → **`window-manager`** (+ window-component). Puis les plugins du projet.
+`accessories` → `games` → `ambiance` → `control-panel-applets` → `local-link` → `user-manager` → `security` → **`window-manager`** (+ window-component). Puis les plugins du projet.
 
 Règles : configuration et registre avant tout ; un service avant les composants qui le lisent **à leur chargement** (l'explorateur et le gestionnaire de fenêtres lisent `Win95UserFiles`,
 `Win95RecycleBin`… en tête de fichier) ; `security` avant `window-manager` ; `window-manager` en dernier. Chaque fichier est chargé avec `?v=<version de la bibliothèque>` (constante `LIB_VERSION`
@@ -233,6 +234,14 @@ Les URL de lecture sont des adresses `blob:` créées par `Win95UserFiles.getSig
 - **Sons / fin de partie** : `Win95Sounds?.play("exclamation")` à la victoire, `Win95Dialog.confirm` pour proposer de rejouer. Toujours arrêter minuteurs et animations sur `win95:window-closed`.
 - **Droits** : ajouter l'application dans `Win95Programs.PROGRAMS` pour qu'elle soit supprimable (Ajout/Suppression de programmes) et dans `START_MENU` (window-manager.js) pour apparaître au bon endroit du menu Démarrer.
 - **Clic droit** : le navigateur est bloqué ; pour un menu propre à un composant, écouter `contextmenu` sur l'élément, appeler `event.preventDefault()` **et** `Win95ContextMenu.open(...)`. Le gestionnaire de fenêtres n'ajoute son menu que si aucun menu n'est ouvert (voir `handleContextMenu`) ; une zone de saisie conserve le menu natif.
+
+### 4.3 sexies Connexion locale (téléphone)
+
+- **Principe** : `Win95LocalLink.createSession()` → jeton aléatoire (20 caractères, `crypto.getRandomValues`), échéance, adresse `<baseUrl>?win95link=<jeton>&exp=<ms>`. **Session en mémoire uniquement** (aucune clé de stockage, donc rien à purger par compte) ; fermée par la fermeture de la fenêtre, l'échéance, `win95:auth-changed` et `win95:auth-logout`. Événement `win95:local-link-changed` (`detail.session`, `null` à la fin).
+- **Mode téléphone** (`loader.js`) : si l'adresse contient `win95link`, seuls les modules `core` et `local-link` sont chargés (`PHONE_MODULES`) ; plugins ignorés sauf `phone: true`. **Conséquence** : `local-link-phone.js`, `local-link-service.js` et `qr-code.js` ne doivent dépendre que du noyau (`Win95Config`, `Win95Utils`), jamais de `Win95Dialog`, `Win95Accounts`, du gestionnaire de fenêtres… (absents sur le téléphone). Le CSS de ce module ne doit pas non plus s'appuyer sur les classes d'autres modules (le style de la barre d'état est redéfini localement).
+- **Rien ne circule entre les deux appareils** : ne pas présenter la fonction comme une connexion établie (libellés : « page de liaison », « code »). L'échéance de l'adresse (`exp`) n'est qu'un confort d'affichage ; tout canal réel doit valider le jeton côté serveur.
+- **`Win95QR`** : encodeur ISO 18004 minimal (octets, niveau M, versions 1 à 10). Il a été relu avec OpenCV (`QRCodeDetectorAruco`, 40 codes de 1 à 213 octets) ; le navigateur de test n'a pas de `BarcodeDetector`, d'où des tests de structure (viseurs, synchronisation, format BCH). Toute modification de l'encodeur doit être re-vérifiée avec un vrai lecteur. Au-delà de 213 octets il lève une erreur (adresse trop longue).
+- `localhost` n'est pas joignable depuis un téléphone : la fenêtre avertit (`isUnreachableFromPhone`), `Win95Config.localLink.baseUrl` corrige. En développement, `npm start` (`tools/dev-server.mjs`, sans dépendance) détecte l'IP du réseau local (`findLanAddress`), ouvre le navigateur du PC sur `localhost` et injecte `window.Win95DevServer = { lanUrl }` dans les pages HTML ; `getBaseUrl` s'en sert quand la page est en localhost : aucune configuration. **Ne jamais ouvrir le bureau du PC sur l'adresse réseau en http** (piège 9 : Web Crypto absent, « Chiffrement indisponible »). La page ne cherche jamais l'IP par une requête réseau.
 
 ### 4.4 Ajouter une règle ou un champ au système de comptes
 

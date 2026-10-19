@@ -38,6 +38,9 @@
         // Scripts et feuilles de style du projet, chargés après la bibliothèque : [{ src: "scripts/x.js", css: "x.css" }] ou chaînes.
         plugins: [],
         supabase: { url: "", anonKey: "" },
+        // Connexion locale (téléphone) : baseUrl = adresse de la page joignable depuis le téléphone (si l'adresse du navigateur est
+        // localhost ou un fichier) ; ttlMinutes = durée de validité d'un QR code.
+        localLink: { baseUrl: "", ttlMinutes: 5 },
         storage: {
             provider: "local",
             local: { quotaMb: 50, maxFileMb: 10 },

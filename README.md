@@ -27,6 +27,7 @@ npm install && npm test        # tests (navigateur piloté, Supabase et Drive si
 | Explorateur (Mes documents, Corbeille) | `scripts/file-explorer/` | Dossiers, import, glisser-déposer, renommage, Corbeille, raccourcis, vues mosaïque / détails. |
 | Bloc-notes / WordPad | `scripts/notepad/` | Édition de `.txt` / `.md`, texte brut ou mis en forme. |
 | Accessoires | `scripts/accessories/` | **Calculatrice** (standard et scientifique, mémoire, clavier), **Horloge** (analogique ou numérique, suit Date/Heure), **Table des caractères** (blocs Unicode, copie). |
+| Connexion locale | `scripts/local-link/` | Icône du bureau : QR code temporaire (5 min) qui ouvre sur le téléphone une page de liaison Windows 95, vide pour le moment, que les projets remplissent (`Win95LocalLink.registerPhonePage`). Aucune donnée n'est encore échangée. Détails : `INTEGRATION.md` §4 bis. |
 | Jeux | `scripts/games/` | **Démineur** (3 niveaux + personnalisé, marques, accord, meilleurs temps), **Solitaire** (Klondike, tirage par 1 ou 3, annuler, score, cascade de victoire), **FreeCell** (donnes numérotées de Microsoft, ex. n° 1, suites limitées par les cellules libres, annuler), **Cœurs** (contre 3 joueurs automatiques, passage de cartes, dame de pique, « tout prendre »). |
 | Paint | `scripts/paint/` | Dessin, enregistrement en `.paint` dans Mes documents. |
 | Lecteur d'image | `scripts/image-viewer/` | Parcourt les images d'un dossier. |
@@ -95,6 +96,10 @@ Si Supabase est demandé sans configuration, la bibliothèque retombe sur le sto
 Ces fournisseurs sont **testés avec un faux Supabase et des fonctions Drive simulées** : à valider avec de vrais comptes avant la production. Modèle de sécurité : « entre proches » (connexion vérifiée côté client, clé anon publique) — voir `vercel/README.md`.
 
 `node tools/init-project.mjs --dir <projet>` prépare un projet complet (page, configuration, `vercel.json` avec CSP, fonctions Google Drive, scripts SQL).
+
+## Développement local
+
+`npm start` lance `tools/dev-server.mjs` : serveur sans dépendance, joignable sur le réseau local ; il affiche l'adresse du poste (ex. `http://192.168.1.20:8000/`) avec un QR code, et ouvre le navigateur du PC sur `localhost` (les comptes exigent localhost ou HTTPS : ne pas travailler sur l'adresse réseau). « Connexion locale » reprend toute seule l'adresse réseau dans son QR code pour un téléphone du même Wi-Fi. `--no-open`, `--port`, `--dir <dossier>` (pour servir un projet).
 
 ## Configuration
 

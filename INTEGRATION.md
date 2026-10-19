@@ -41,6 +41,7 @@ Référence commentée : `scripts/services/win95-config.js`.
 | `supabase` | vide | `{ url, anonKey }` (clé **publique** anon) |
 | `exclude` | `[]` | modules (`"games"`, `"accessories"`, `"boot"`…) ou fichiers (`"accounts-store.js"`) à ne pas charger |
 | `plugins` | `[]` | scripts / styles du projet (voir §4) |
+| `localLink` | `{ baseUrl: "", ttlMinutes: 5 }` | Connexion locale : `baseUrl` = adresse de la page joignable depuis le téléphone (obligatoire si la page est ouverte en `localhost`), durée de validité du QR code |
 | `bootScreen`, `bootstrap`, `userTray`, `dbName`, `libPath`, `cacheBust` | | écran de démarrage, Bootstrap (false si la page le charge), compte dans la zone de notification, préfixe IndexedDB, dossier de la bibliothèque, suffixe de cache |
 
 ## 4. Personnaliser : plugins et API d'extension
@@ -60,6 +61,27 @@ window.Win95FileExplorer.registerContextMenuContributor((entry, explorer) => [{ 
 ```
 
 Référence de toutes les méthodes : `LLM-GUIDE.md` §11. Les icônes **de la bibliothèque** sont déjà résolues (`Win95Asset`) ; les icônes du projet s'écrivent comme dans n'importe quelle page du projet.
+
+## 4 bis. Connexion locale : relier le téléphone de l'utilisateur
+
+La bibliothèque fournit l'icône « Connexion locale » : elle ouvre une fenêtre avec un **QR code temporaire** ; le téléphone qui le scanne arrive sur **la même page** avec `?win95link=<jeton>&exp=<échéance>`. Dans ce **mode téléphone**, le chargeur ne charge que le noyau et le module `local-link` (ni démarrage, ni comptes, ni bureau, ni vos plugins ordinaires) et affiche une fenêtre Windows 95 **vide**.
+
+Un projet y met son interface avec un plugin **déclaré `phone: true`** (seul type de plugin chargé en mode téléphone) :
+
+```js
+window.Win95Config = { appName: "Mon projet", localLink: { baseUrl: "https://mon-projet.vercel.app/" },
+    plugins: ["scripts/mon-plugin.js", { src: "scripts/mon-plugin-telephone.js", phone: true }] };
+// scripts/mon-plugin-telephone.js
+window.Win95LocalLink.registerPhonePage((conteneur, { token, expiresAt, appName, setStatus }) => {
+    conteneur.textContent = "Mon interface mobile";   // DOM Windows 95 (charte-graphique.md) ; pas de bureau ici
+    setStatus("Prêt.");
+    return () => { /* nettoyage facultatif */ };
+});
+```
+
+Côté ordinateur, `Win95LocalLink.getSession()` donne `{ token, url, createdAt, expiresAt }` et l'événement `win95:local-link-changed` signale ouverture, renouvellement et fin de session (`detail.session === null`). Le plugin ordinaire s'en sert pour ouvrir **son propre canal** (WebSocket, Supabase Realtime, WebRTC…) avec le jeton.
+
+Points à connaître : **la bibliothèque ne transporte aucune donnée** entre les deux appareils pour l'instant ; l'échéance de l'adresse n'est qu'un confort d'affichage, **le canal du projet doit vérifier le jeton côté serveur** ; `localhost` n'est pas joignable depuis un téléphone (renseigner `localLink.baseUrl`, ou ouvrir la page par l'adresse réseau du poste) ; en développement, `npm start` (ou `node vendor/win95-lib/tools/dev-server.mjs --dir .` depuis un projet) détecte l'adresse réseau du poste, ouvre la page sur `localhost` et la fournit au QR code : rien à configurer ; pour retirer la fonction, `exclude: ["local-link"]`.
 
 ## 5. Stockage, comptes, déploiement
 
