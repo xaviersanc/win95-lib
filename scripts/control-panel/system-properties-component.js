@@ -46,6 +46,7 @@
             }
 
             this.sheet = sheets().mount(this.bodyElement, {
+                id: "system-properties",
                 tabs: [
                     { key: "general", label: "Général", render: (panel) => this.renderGeneral(panel) },
                     { key: "devices", label: "Gestionnaire de périphériques", render: (panel) => this.renderDevices(panel) },

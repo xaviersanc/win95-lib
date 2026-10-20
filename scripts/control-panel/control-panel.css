@@ -6,6 +6,19 @@ body.win95-desktop .control-panel-body {
     padding: 0;
 }
 
+/* La liste d'icônes occupe toute la hauteur : la barre d'état reste collée en bas et prend sa hauteur minimale. */
+body.win95-desktop .control-panel-body .explorer-list {
+    flex: 1;
+}
+
+body.win95-desktop .control-panel-body .explorer-status {
+    flex: none;
+    padding: 1px 6px;
+    line-height: 16px;
+    border-top: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+}
+
 body.win95-desktop .control-panel-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
@@ -86,16 +99,19 @@ body.win95-desktop .property-panel[hidden] {
 }
 
 body.win95-desktop .property-status {
+    flex: none;
     min-height: 16px;
-    padding: 2px 4px;
+    padding: 1px 4px;
+    line-height: 16px;
     color: #000;
 }
 
 body.win95-desktop .property-buttons {
+    flex: none;
     display: flex;
     justify-content: flex-end;
     gap: 6px;
-    padding-top: 4px;
+    padding-top: 2px;
 }
 
 body.win95-desktop .property-group {
@@ -656,4 +672,101 @@ body.win95-desktop .property-check input[type="checkbox"]:checked::before {
 body.win95-desktop .property-check input[type="checkbox"]:focus-visible {
     outline: 1px dotted #000;
     outline-offset: 2px;
+}
+
+/* --- Champs déclaratifs (Win95PropertyFields) : applets créés par registerApplet / addTab -------------------- */
+body.win95-desktop .property-field[hidden],
+body.win95-desktop .property-check[hidden],
+body.win95-desktop .property-group[hidden],
+body.win95-desktop .property-header[hidden],
+body.win95-desktop .property-note[hidden] {
+    display: none;
+}
+
+body.win95-desktop .property-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+body.win95-desktop .property-header img {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+}
+
+body.win95-desktop .property-header p {
+    margin: 0;
+    color: #000;
+}
+
+body.win95-desktop .property-field {
+    margin: 0 0 6px;
+    color: #000;
+}
+
+body.win95-desktop .property-field-label {
+    display: block;
+    margin: 0 0 2px;
+    color: #000;
+    font-weight: normal;
+}
+
+body.win95-desktop .property-input {
+    width: 100%;
+    margin: 0;
+    color: #000;
+}
+
+body.win95-desktop .property-slider-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    color: #000;
+}
+
+body.win95-desktop .property-slider {
+    width: 100%;
+    accent-color: #000080;
+}
+
+body.win95-desktop .property-choices {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+    box-shadow: inset 1px 1px 0 #404040;
+}
+
+body.win95-desktop .property-choice {
+    margin: 0;
+    padding: 2px 6px;
+    border: 0;
+    background: #fff;
+    color: #000;
+    font-size: 12px;
+    text-align: left;
+    cursor: default;
+}
+
+body.win95-desktop .property-choice.selected {
+    background: #000080;
+    color: #fff;
+}
+
+body.win95-desktop .property-choice:disabled {
+    color: #808080;
+}
+
+body.win95-desktop .property-choice:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -2px;
+}
+
+body.win95-desktop .property-input:disabled {
+    color: #808080;
+    background: #c0c0c0;
 }

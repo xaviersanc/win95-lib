@@ -10,7 +10,9 @@ qui montent de version. Ce guide s'adresse à qui démarre un projet ou en migre
 | **Sous-module git** (recommandé) | le projet est un dépôt git ; mise à jour = avancer un pointeur | `git submodule add https://github.com/xaviersanc/win95-lib vendor/win95-lib` |
 | Instantané copié | essayer avant publication, ou sous-modules impossibles | `node <lib>/tools/export.mjs --target vendor/win95-lib --clean` |
 
-Mise à jour d'un sous-module : `cd vendor/win95-lib && git fetch && git checkout <tag> && cd ../.. && git add vendor/win95-lib` puis commit dans le projet (le projet décide de la version qu'il utilise).
+**Mise à jour en un double-clic** : copier `vendor/win95-lib/tools/maj-lib.bat` à la racine du projet (`init-project.mjs` le fait) et le lancer : il récupère la dernière version de la bibliothèque (`maj-lib.bat vendor/win95-lib v1.3.0` pour une version précise), affiche l'ancienne et la nouvelle version et enregistre le nouveau pointeur dans un commit local (rien n'est poussé). La bibliothèque doit d'abord être poussée sur GitHub.
+
+À la main : `cd vendor/win95-lib && git fetch && git checkout <tag> && cd ../.. && git add vendor/win95-lib` puis commit dans le projet (le projet décide de la version qu'il utilise).
 Vercel : activer « Include source files from Git submodules » (Project > Settings > Git) ; pour un dépôt privé, ajouter une clé de déploiement.
 
 ## 2. Démarrer un projet

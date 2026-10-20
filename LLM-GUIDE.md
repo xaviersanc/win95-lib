@@ -45,6 +45,7 @@ scripts/services/                  services globaux sans interface propre
   win95-config.js                  window.Win95Config (dbName)
   win95-services-registry.js       window.Win95Services (register/get)
   win95-utils.js                   Win95Utils : chemins, ids, types de fichiers, utilisateur courant
+  win95-settings.js                Win95Settings : réglages déclaratifs par compte (champs -> stockage, validation, effet) : voir §4.3 bis
   accounts-store.js                Win95Accounts : comptes, hachage, rôles, applications autorisées
   clock-store.js                   Win95Clock : date/heure simulées, fuseau (lu par tray-clock.js)
   sound-store.js                   Win95Sounds : événements → sons synthétisés (Web Audio), play(événement)
@@ -69,7 +70,7 @@ scripts/accessories/              calculator, clock (Win95ClockApp), charmap
 scripts/local-link/               Connexion locale : qr-code.js (Win95QR), local-link-service.js (Win95LocalLink), local-link-component.js (fenêtre PC), local-link-phone.js (page du téléphone)
 scripts/games/                    cards.js (Win95Cards : paquet, sprites, cascade), minesweeper, solitaire, freecell, hearts — chacun expose Engine (règles sans interface) + attach
 scripts/ambiance/                 boot-screen (démarrage), screensaver + screensaver-effects (écrans de veille), blue-screen, close-program (Ctrl+Alt+Suppr)
-scripts/control-panel/             Panneau de configuration + applets (date-time, mouse, sounds, system, add-remove) + property-sheet.js (onglets OK/Annuler/Appliquer)
+scripts/control-panel/             Panneau de configuration + applets (date-time, mouse, sounds, system, add-remove) + property-sheet.js (onglets OK/Annuler/Appliquer) + property-fields.js (champs déclaratifs)
 scripts/security/                  Win95Security : session + écran de connexion/premier démarrage
 ```
 
@@ -99,13 +100,14 @@ Chaque composant = `scripts/<nom>/<nom>-component.js` + `.css`, exposé sur `win
    | Jeux et accessoires | `win95.minesweeper.v1.<id>`, `win95.solitaire.v1.<id>`, `win95.clockapp.v1.<id>` |
    | Sons | `localStorage["win95.sounds.v1.<id>"]` |
    | Programmes supprimés (cachés) | `localStorage["win95.programs.hidden.v1.<id>"]` |
-   | Horloge (date/heure réglées, fuseau) | `localStorage["win95.clock.v1"]` — **machine**, commun à tous les comptes (seule exception) |
+   | Réglages déclaratifs (`Win95Settings`) | `localStorage["win95.settings.<ns>.v1.<id>"]` |
+| Horloge (date/heure réglées, fuseau) | `localStorage["win95.clock.v1"]` — **machine**, commun à tous les comptes (seule exception) |
    | Mode d'affichage de l'explorateur | `localStorage["win95.explorer.viewMode"]` (global) |
 
    `Win95Security.purgeUserData(id)` efface tout ce qui se termine par `.<id>` et la base IndexedDB : **toute nouvelle clé par compte doit se terminer par `.<id>`** pour être purgée.
 4. **Événements custom** (sur `window`, sauf mention) :
    `win95:auth-changed` (session ouverte), `win95:auth-logout`, `win95:accounts-changed`, `win95:user-files-changed`, `win95:recycle-bin-changed`,
-   `win95:document-shortcuts-changed`, `win95:wallpaper-changed`, `win95:clock-changed`, `win95:sounds-changed`, `win95:mouse-changed`, `win95:programs-changed`, `win95:screensaver-changed`, `win95:local-link-changed`, `win95:local-link-phone-ready`, `win95:boot-done`, `win95:bluescreen-shown` ; sur l'**élément fenêtre** : `win95:window-closing` (annulable : `preventDefault()` refuse la fermeture, ex. document non
+   `win95:document-shortcuts-changed`, `win95:wallpaper-changed`, `win95:clock-changed`, `win95:sounds-changed`, `win95:mouse-changed`, `win95:programs-changed`, `win95:screensaver-changed`, `win95:local-link-changed`, `win95:local-link-phone-ready`, `win95:settings-changed` (`detail: { ns, values }`), `win95:window-manager-ready`, `win95:control-panel-applets-changed`, `win95:boot-done`, `win95:bluescreen-shown` ; sur l'**élément fenêtre** : `win95:window-closing` (annulable : `preventDefault()` refuse la fermeture, ex. document non
    enregistré) et `win95:window-closed` (**toujours y retirer ses écouteurs globaux** : `window.addEventListener(...)` sans nettoyage = fuite et double rendu).
 5. **Les stores sont des singletons réactifs** : toute mutation émet son événement ; les vues écoutent l'événement et se redessinent, elles ne se rafraîchissent pas elles-mêmes à la main.
 6. **Résultats d'opérations** : les stores renvoient `{ ok, message, … }` avec un message français prêt à afficher dans la barre d'état. Ne pas lever d'exception pour une erreur attendue.
@@ -191,14 +193,38 @@ Les URL de lecture sont des adresses `blob:` créées par `Win95UserFiles.getSig
   finissant par une espace est donc modifié : c'est le cas du changement de mot de passe du gestionnaire d'utilisateurs ; l'écran de connexion et le formulaire de création, eux, utilisent leurs propres champs non tronqués).
 - Glisser-déposer : `Win95DragDrop.writePayload(dataTransfer, payload, [MIME.explorerEntry])` / `readPayload(...)` ; types dans `Win95DragDrop.MIME`.
 
-### 4.3 bis Ajouter un applet au Panneau de configuration
+### 4.3 bis Ajouter un réglage ou un applet au Panneau de configuration (le cadre de réglages)
 
-1. Créer `scripts/control-panel/<nom>-component.js` : `Win95PropertySheet.mount(bodyElement, { tabs: [{ key, label, render(panel, sheet) }], onApply, onClose })`. `sheet.markDirty()` active « Appliquer » ;
-   `onApply` renvoie `{ ok, message }` ; `onClose` ferme la fenêtre (`Win95WindowManager.closeWindow(rootElement)`). `buttons: "close"` (un seul bouton) ou `"ok-cancel"` (sans Appliquer) sont possibles.
-2. `window-manager.js` : définition avec `parentApp: "control-panel"` dans `windowDefinitions`, `case` qui appelle `this.createAppletWindow(appName, definition, { width, height, attach })` (fenêtre sans réduire/agrandir, corps `data-applet`).
-3. `security-manager.js` : ajouter l'applet à `APP_PARENTS`. `control-panel-component.js` : ajouter l'entrée à `APPLETS` (icône 32 px de `assets/icons/`).
-4. Un réglage doit avoir un **effet réel** (pas de case qui ne fait rien) ; s'il n'est pas implémentable, ne pas l'afficher. Il est stocké par compte (clé `…<id>`) via un store dédié qui émet son événement.
-5. CSS dans `control-panel.css` (classes `property-*`, déjà prévues : `property-group`, `property-note`, `property-check`…).
+**Cas courant : tout est déclaratif, aucun DOM à écrire.** Un projet (plugin) ou la bibliothèque appelle, avant ou après le démarrage du bureau :
+
+```js
+Win95ControlPanel.registerApplet({
+    key: "clavier", label: "Clavier", icon: "chemin/clavier32.png", hint: "Règle la répétition des touches.",   // icône 32 px ; hint = barre d'état
+    tabs: [{
+        key: "vitesse", label: "Vitesse", intro: { icon: "chemin/clavier32.png", text: "Réglez la répétition." },
+        fields: [
+            { key: "repeat", type: "slider", label: "Répétition", min: 0, max: 10, default: 4, minLabel: "Lente", maxLabel: "Rapide" },
+            { key: "click", type: "checkbox", label: "Clic de touche", default: false },
+            { key: "volume", type: "number", label: "Volume", min: 0, max: 100, default: 50, enabledIf: (v) => v.click },
+            { key: "layout", type: "radio", label: "Disposition", options: [{ value: "azerty", label: "AZERTY" }, { value: "qwerty", label: "QWERTY" }], default: "azerty" }
+        ]
+    }],
+    apply(values) { document.body.dataset.layout = values.layout; }   // l'EFFET réel : rejoué à chaque « Appliquer » et à l'ouverture de session
+});
+```
+
+Cela crée l'icône du Panneau, la fenêtre (feuille de propriétés OK / Annuler / Appliquer), les droits (hérités de `control-panel`), le stockage par compte (`Win95Settings`, espace de noms = `key`), la validation (bornes, valeurs par défaut, longueur) et l'événement `win95:settings-changed`. Lire une valeur ailleurs : `Win95Settings.get("clavier", "repeat")` ou `Win95Settings.store("clavier").onChange(fn)`.
+
+- **Types de champs** : `checkbox`, `slider`, `number`, `text`, `select`, `radio` (réglages) ; `group` (cadre), `header`, `note`, `button`, `custom` (mise en page, actions, zone libre). Options communes : `label`, `hint`, `disabled`, `enabledIf(values)`, `visibleIf(values)`, `onChange(value, values)`. Référence complète : en-tête de `property-fields.js`.
+- **Ajouter un réglage à un applet existant** (sans toucher son code) : `Win95ControlPanel.addTab("mouse", { key, label, ns, fields, apply(values) })`. Les clés d'applet sont celles de `windowDefinitions` : `mouse`, `sounds`, `date-time`, `system-properties`, `display-properties`, `add-remove-programs`.
+- **Interface libre** (aperçu, liste dynamique…) : `registerApplet({ key, label, icon, attach(elementFenetre) })` ; dans `attach` : `Win95PropertySheet.mount(corps, { id: key, tabs: [{ key, label, render(panel, sheet) }], onApply, onClose })`. Un onglet est soit `render` libre, soit `fields` déclaratifs. `sheet.markDirty()` active « Appliquer ». Pour le stockage, préférer `Win95Settings` à un store maison.
+- **Un réglage doit avoir un effet réel** : l'effet va dans `apply(values)` (idempotent : il est rejoué à la connexion). S'il n'est pas implémentable, ne pas l'afficher.
+- Si le module `control-panel-applets` est exclu (`Win95Config.exclude`), `Win95ControlPanel` n'existe pas : tester sa présence avant d'appeler `registerApplet` / `addTab`.
+- **Applet très personnalisé de la bibliothèque** (Date/Heure, Sons…), méthode manuelle :
+  1. `scripts/control-panel/<nom>-component.js` avec `Win95PropertySheet.mount(bodyElement, { id: "<clé>", tabs, onApply, onClose })` (`id` : pour que `addTab` puisse l'étendre) ; `onApply` renvoie `{ ok, message }`, `onClose` ferme la fenêtre (`Win95WindowManager.closeWindow(rootElement)`), `buttons: "close"` ou `"ok-cancel"` sont possibles ;
+  2. `window-manager.js` : définition avec `parentApp: "control-panel"` dans `windowDefinitions` et `case` appelant `this.createAppletWindow(appName, definition, { width, height, attach })` ; `APP_PARENTS` (`security-manager.js`) ; entrée dans `APPLETS` (`control-panel-component.js`) ;
+  3. CSS dans `control-panel.css` (classes prévues : `property-group`, `property-note`, `property-check`, `property-field`, `property-slider`, `property-choices`…).
+- **Disposition** : la barre d'état de la fenêtre du Panneau est collée en bas, à hauteur minimale ; une zone qui doit remplir une fenêtre prend `flex: 1` (un test vérifie la géométrie).
 
 ### 4.3 ter Sons, souris, horloge : points d'intégration
 

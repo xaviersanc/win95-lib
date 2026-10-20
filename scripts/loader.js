@@ -20,7 +20,7 @@
     //   Les plugins y sont ignorés, sauf ceux déclarés `phone: true` (leur contenu s'accroche à Win95LocalLink.registerPhonePage) ;
     // Cette liste est LA référence de l'ordre de chargement : toute nouvelle application s'y ajoute (une seule fois).
 
-    const LIB_VERSION = "1.2.0";
+    const LIB_VERSION = "1.3.0";
     const SUPABASE_JS = {
         src: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js",
         integrity: "sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"
@@ -53,7 +53,7 @@
             id: "services",
             js: [
                 "scripts/services/accounts-store.js", "scripts/services/clock-store.js", "scripts/services/sound-store.js",
-                "scripts/services/mouse-store.js", "scripts/services/programs-store.js", "scripts/services/recycle-bin-store.js",
+                "scripts/services/mouse-store.js", "scripts/services/win95-settings.js", "scripts/services/programs-store.js", "scripts/services/recycle-bin-store.js",
                 "scripts/services/wallpaper-store.js", "scripts/services/document-shortcuts-store.js", "scripts/services/win95-context-menu.js",
                 "scripts/services/win95-menu-bar.js", "scripts/services/win95-dialog.js", "scripts/services/win95-rich-text.js",
                 "scripts/services/user-files-store.js"
@@ -68,7 +68,7 @@
             id: "control-panel",
             css: ["scripts/display-properties/display-properties-component.css", "scripts/control-panel/control-panel.css"],
             js: [
-                "scripts/control-panel/property-sheet.js"
+                "scripts/control-panel/property-sheet.js", "scripts/control-panel/property-fields.js"
             ]
         },
         {

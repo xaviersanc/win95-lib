@@ -11,6 +11,25 @@
         { app: "add-remove-programs", label: "Ajout/Suppression de programmes", icon: window.Win95Asset("assets/icons/appwizard-2.png"), hint: "Installe ou supprime des programmes." }
     ];
 
+    const APPLETS_CHANGED_EVENT = "win95:control-panel-applets-changed";
+    const DEFAULT_ICON = "assets/icons/directory_control_panel-4.png";
+
+    // Applet déclaratif : la feuille de propriétés est générée à partir des champs de `tabs` (voir property-fields.js).
+    function mountApplet(rootElement, spec) {
+        const bodyElement = rootElement.querySelector("[data-applet]");
+        if (!bodyElement) {
+            return null;
+        }
+        const sheet = window.Win95PropertySheet.mount(bodyElement, {
+            id: spec.key,
+            tabs: spec.tabs,
+            buttons: spec.buttons,
+            onApply: spec.onApply ? () => spec.onApply(spec.store ? sheet.pending(spec.store) : {}) : null,
+            onClose: () => window.Win95WindowManager?.closeWindow(rootElement)
+        });
+        return sheet;
+    }
+
     class Win95ControlPanel {
         constructor(rootElement) {
             this.rootElement = rootElement;
@@ -24,9 +43,11 @@
             this.boundRender = () => this.render();
             window.addEventListener("win95:accounts-changed", this.boundRender);
             window.addEventListener("win95:programs-changed", this.boundRender);
+            window.addEventListener(APPLETS_CHANGED_EVENT, this.boundRender);
             rootElement.addEventListener("win95:window-closed", () => {
                 window.removeEventListener("win95:accounts-changed", this.boundRender);
                 window.removeEventListener("win95:programs-changed", this.boundRender);
+                window.removeEventListener(APPLETS_CHANGED_EVENT, this.boundRender);
             }, { once: true });
             rootElement.__win95ControlPanelInstance = this;
             this.render();
@@ -76,8 +97,73 @@
         }
     }
 
+    // Ajoute un applet au Panneau de configuration (icône + fenêtre + droits hérités du Panneau) :
+    //   Win95ControlPanel.registerApplet({
+    //       key: "clavier", label: "Clavier", icon: "chemin/icone32.png", hint: "Texte de la barre d'état",
+    //       width?: 400, height?: 390, title?, before?: "<clé d'un autre applet>",
+    //       tabs: [{ key, label, intro?: { icon, text }, fields: [{ key, type, label, default, … }] }],   // interface générée (property-fields.js)
+    //       apply?(values),            // effet réel des réglages : rejoué à chaque enregistrement ET à l'ouverture de session
+    //       onApply?(values)           // facultatif : rappel après l'enregistrement des réglages (peut renvoyer { ok, message })
+    //     })
+    //   ou, pour une interface entièrement libre : { key, label, icon, attach(elementFenetre) } (cf. Win95PropertySheet.mount).
+    // Les valeurs sont stockées par compte (Win95Settings, espace de noms = key). Peut être appelé avant ou après le démarrage du bureau.
+    function registerApplet(spec) {
+        if (!spec?.key || !spec.label) {
+            throw new Error("registerApplet : `key` et `label` obligatoires.");
+        }
+        if (!spec.attach && !spec.tabs?.length) {
+            throw new Error("registerApplet : `tabs` (ou `attach`) obligatoire.");
+        }
+        const entry = {
+            app: spec.key,
+            label: spec.label,
+            icon: spec.icon || window.Win95Asset(DEFAULT_ICON),
+            hint: spec.hint || ""
+        };
+        const existing = APPLETS.findIndex((applet) => applet.app === spec.key);
+        if (existing >= 0) {
+            APPLETS[existing] = entry;
+        } else {
+            const before = spec.before ? APPLETS.findIndex((applet) => applet.app === spec.before) : -1;
+            APPLETS.splice(before >= 0 ? before : APPLETS.length, 0, entry);
+        }
+
+        let attach = spec.attach;
+        if (!attach) {
+            const apply = spec.apply || null;
+            spec.tabs.forEach((tab) => window.Win95PropertyFields.prepareTab(tab, { ns: tab.ns || spec.key, apply }));
+            // Un seul store par applet : « Appliquer » rappelle onApply avec les valeurs en cours de modification.
+            spec.store = window.Win95Settings.store(spec.key);
+            attach = (element) => mountApplet(element, spec);
+        }
+        const registerWindow = () => window.Win95WindowManager.registerApp({
+            key: spec.key,
+            label: spec.label,
+            icon: entry.icon,
+            title: spec.title || spec.label,
+            parentApp: "control-panel",
+            applet: { width: spec.width || "400px", height: spec.height || "390px", attach }
+        });
+        if (window.Win95WindowManager) {
+            registerWindow();
+        } else {
+            window.addEventListener("win95:window-manager-ready", registerWindow, { once: true });
+        }
+        window.dispatchEvent(new CustomEvent(APPLETS_CHANGED_EVENT));
+        return entry;
+    }
+
+    // Ajoute un onglet de réglages à un applet existant (« mouse », « sounds », « date-time », « system-properties », « display-properties »,
+    // « add-remove-programs » ou un applet de registerApplet) : { key, label, fields, intro?, ns?, apply?(values) }.
+    function addTab(appletKey, tab) {
+        return window.Win95PropertySheet.registerTab(appletKey, tab);
+    }
+
     const api = {
         APPLETS,
+        APPLETS_CHANGED_EVENT,
+        registerApplet,
+        addTab,
         attach(rootElement) {
             return rootElement?.__win95ControlPanelInstance || new Win95ControlPanel(rootElement);
         }
