@@ -131,6 +131,8 @@ write("vercel.json", vercelJson);
 copyFromLib("vercel/api/drive.js", "api/drive.js");
 copyFromLib("vercel/api/drive-auth.js", "api/drive-auth.js");
 copyFromLib("vercel/.env.example", ".env.example");
+// Mise à jour de la bibliothèque en un double-clic (sous-module git) : voir tools/maj-lib.bat.
+write("maj-lib.bat", fs.readFileSync(path.join(libRoot, "tools/maj-lib.bat"), "utf8"));
 
 // --- Supabase -------------------------------------------------------------------------------------------------------------
 fs.readdirSync(path.join(libRoot, "supabase")).filter((name) => name.endsWith(".sql")).forEach((name) => copyFromLib(`supabase/${name}`));

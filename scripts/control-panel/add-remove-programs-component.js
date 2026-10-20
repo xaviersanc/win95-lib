@@ -25,6 +25,7 @@
             }, { once: true });
 
             this.sheet = sheets().mount(this.bodyElement, {
+                id: "add-remove-programs",
                 tabs: [
                     { key: "install", label: "Installation/Désinstallation", render: (panel) => this.renderInstallTab(panel) },
                     { key: "windows", label: "Installation de Windows", render: (panel) => this.renderComponentsTab(panel) },

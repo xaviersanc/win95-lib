@@ -16,6 +16,7 @@
             const state = mouse().getState();
             this.pending = { ...state };
             this.sheet = sheets().mount(this.bodyElement, {
+                id: "mouse",
                 tabs: [
                     { key: "buttons", label: "Boutons", render: (panel) => this.renderButtonsTab(panel) },
                     { key: "pointers", label: "Pointeurs", render: (panel) => this.renderPointersTab(panel) }

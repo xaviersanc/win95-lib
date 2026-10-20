@@ -2517,6 +2517,8 @@
         manager.init();
         window.Win95WindowManager = manager;
         window.Win95Services?.register?.("Win95WindowManager", manager);
+        // Les modules chargés avant le gestionnaire (applets déclaratifs du Panneau de configuration) enregistrent leurs applications ici.
+        window.dispatchEvent(new CustomEvent("win95:window-manager-ready"));
     }
 
     if (document.readyState === "loading") {

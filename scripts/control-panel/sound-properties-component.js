@@ -18,6 +18,7 @@
             this.pending = { scheme: state.scheme, map: { ...state.map }, volume: state.volume };
             this.selectedEvent = sounds().EVENTS[0].key;
             this.sheet = sheets().mount(this.bodyElement, {
+                id: "sounds",
                 tabs: [{ key: "sounds", label: "Sons", render: (panel) => this.renderPanel(panel) }],
                 onApply: () => sounds().save(this.pending),
                 onClose: () => window.Win95WindowManager?.closeWindow(rootElement)

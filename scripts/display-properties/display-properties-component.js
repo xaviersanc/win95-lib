@@ -26,6 +26,7 @@
                 tabs.push({ key: "saver", label: "Écran de veille", render: (panel) => this.renderScreenSaver(panel) });
             }
             this.sheet = sheets().mount(this.bodyElement, {
+                id: "display-properties",
                 tabs,
                 onApply: () => this.apply(),
                 onClose: () => window.Win95WindowManager?.closeWindow(rootElement)

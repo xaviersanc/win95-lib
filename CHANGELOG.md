@@ -2,6 +2,21 @@
 
 Versionnement sémantique : une version **majeure** pour tout changement incompatible de l'API d'extension, de la configuration, des fournisseurs, des clés de stockage, des événements `win95:*` ou de l'ordre de chargement.
 
+## 1.3.0 — Cadre de réglages (Panneau de configuration extensible)
+
+Version mineure : rien d'existant ne change de contrat. Nouveaux événements `win95:window-manager-ready`, `win95:control-panel-applets-changed` et `win95:settings-changed`.
+
+**Ajouts**
+- **`Win95Settings`** (`scripts/services/win95-settings.js`) : réglages **déclaratifs par compte** (`define(ns, { fields, apply })` → `get / getAll / save / reset / onChange`). Types `checkbox`, `slider`, `number`, `select`, `radio`, `text` ; validation et valeurs par défaut automatiques ; stockage `win95.settings.<ns>.v1.<id>` (purgé avec le compte) ; `apply(values)` rejoué à chaque enregistrement et à l'ouverture de session.
+- **`Win95PropertyFields`** (`scripts/control-panel/property-fields.js`) : génère l'interface Windows 95 des champs (`checkbox`, `slider`, `number`, `text`, `select`, `radio`, `group`, `header`, `note`, `button`, `custom`) avec `enabledIf`, `visibleIf`, `hint`, `format`.
+- **`Win95ControlPanel.registerApplet({ key, label, icon, tabs, apply })`** : un nouvel applet (icône, fenêtre, droits hérités du Panneau, réglages stockés) en une déclaration, avant ou après le démarrage du bureau. `registerApplet({ …, attach })` pour une interface libre.
+- **`Win95ControlPanel.addTab(applet, onglet)`** / **`Win95PropertySheet.registerTab`** : ajoute un onglet de réglages à un applet existant (Souris, Sons, Date/Heure, Système, Affichage, Ajout/Suppression) sans modifier son code. `Win95PropertySheet.mount` accepte `id` et des onglets déclaratifs (`fields`), agrège « Appliquer » ; `sheet.pending(store)`.
+- **`tools/maj-lib.bat`** : met un projet enfant à jour (sous-module `vendor/win95-lib` : fetch, checkout de `origin/main` ou d'une version donnée, affichage `ancienne -> nouvelle version`, commit local du pointeur). `init-project.mjs` le copie à la racine des nouveaux projets.
+- Tests : réglages (validation, clé par compte, effet, désabonnement), applet déclaratif (champs, `enabledIf`, `visibleIf`, Appliquer, droits), onglet ajouté à Souris, géométrie du Panneau.
+
+**Corrections**
+- Panneau de configuration : la liste d'icônes occupe toute la hauteur et la barre d'état, de hauteur minimale, reste collée en bas de la fenêtre (elle flottait au milieu au-dessus d'un grand vide gris). Barre d'état et boutons des feuilles de propriétés resserrés.
+
 ## 1.2.0 — Connexion locale (téléphone)
 
 Version mineure : rien d'existant ne change de comportement ; un projet qui n'en veut pas ajoute `"local-link"` à `Win95Config.exclude`.

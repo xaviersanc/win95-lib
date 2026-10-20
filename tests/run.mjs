@@ -389,7 +389,7 @@ test("outil init-project : projet généré -> page fonctionnelle, vercel.json, 
     fs.rmSync(path.join(root, "tests/.tmp"), { recursive: true, force: true });
     try {
         execFileSync(process.execPath, [path.join(root, "tools/init-project.mjs"), "--dir", directory, "--name", "Essai", "--supabase-url", "https://mon-domaine.example.org"], { stdio: "pipe" });
-        const files = ["index.html", "win95-config.js", "vercel.json", "api/drive.js", "api/drive-auth.js", ".env.example", "supabase/01-accounts.sql", "supabase/02-user-files.sql", "supabase/03-drive-storage.sql", ".gitignore"];
+        const files = ["index.html", "win95-config.js", "vercel.json", "api/drive.js", "api/drive-auth.js", ".env.example", "supabase/01-accounts.sql", "supabase/02-user-files.sql", "supabase/03-drive-storage.sql", ".gitignore", "maj-lib.bat"];
         files.forEach((file) => assert(fs.existsSync(path.join(directory, file)), `fichier généré : ${file}`));
         assert(JSON.parse(fs.readFileSync(path.join(directory, "vercel.json"), "utf8")).headers[0].headers[0].value.includes("https://mon-domaine.example.org"), "CSP adaptée au domaine Supabase");
         // Seconde exécution : rien n'est écrasé.
@@ -756,6 +756,128 @@ test("connexion locale : page du téléphone (mode téléphone, page vide, code 
     await page.goto(`${origin}/index.html?noboot`);
     await page.waitForSelector(".security-screen");
     equal(await page.evaluate(() => [Boolean(document.querySelector(".local-link-phone")), window.Win95Loader.phoneMode]), [false, false], "sans paramètre : bureau normal");
+});
+
+// --- 8. Cadre de réglages : Win95Settings, champs déclaratifs, applets du Panneau de configuration -----------------
+
+test("réglages : Win95Settings valide, borne, stocke par compte, rejoue l'effet", async (page) => {
+    await open(page);
+    await createAdmin(page);
+    const r = await page.evaluate(() => {
+        let applied = 0;
+        const store = window.Win95Settings.define("essai", {
+            fields: [
+                { key: "on", type: "checkbox", default: true },
+                { key: "level", type: "slider", min: 1, max: 5, step: 1, default: 3 },
+                { key: "mode", type: "select", options: [{ value: "a", label: "A" }, "b"], default: "a" },
+                { key: "name", type: "text", maxLength: 4, default: "x" },
+                { key: "note", type: "note", text: "pas un réglage" }
+            ],
+            apply: () => { applied += 1; }
+        });
+        const out = { defaults: store.getAll(), initial: applied };
+        out.save = store.save({ level: 99, mode: "zzz", name: "abcdefg", inconnu: 1, on: "oui" });
+        out.values = store.getAll();
+        const keys = Object.keys(localStorage).filter((key) => key.startsWith("win95.settings.essai.v1."));
+        out.key = keys.length === 1 && keys[0].endsWith(`.${window.Win95Utils.getCurrentUserId()}`);
+        out.appliedAfterSave = applied;
+        let heard = null;
+        const off = store.onChange((values) => { heard = values.level; });
+        store.save({ level: 2 });
+        off();
+        store.save({ level: 4 });
+        out.heard = heard;
+        window.dispatchEvent(new CustomEvent("win95:auth-changed"));
+        out.appliedAfterAuth = applied;
+        out.reset = store.reset().ok && store.get("level");
+        return out;
+    });
+    equal(r.defaults, { on: true, level: 3, mode: "a", name: "x" }, "valeurs par défaut (la note n'est pas un réglage)");
+    equal([r.initial, r.save.ok], [1, true], "l'effet est joué dès la définition");
+    equal(r.values, { on: true, level: 5, mode: "a", name: "abcd" }, "valeurs invalides ramenées (borne, défaut, longueur), clé inconnue ignorée");
+    assert(r.key, "clé de stockage suffixée par l'id du compte");
+    equal([r.heard, r.appliedAfterAuth, r.reset], [2, 5, 3], "onChange, désabonnement, effet rejoué à la connexion, réinitialisation");
+});
+
+test("Panneau de configuration : barre d'état minimale collée en bas, applet déclaratif, onglet ajouté à un applet existant", async (page) => {
+    await open(page);
+    await createAdmin(page);
+    await page.evaluate(() => {
+        window.__kbApplied = [];
+        window.Win95ControlPanel.registerApplet({
+            key: "clavier", label: "Clavier", hint: "Règle le clavier.", width: "400px", height: "400px",
+            tabs: [{
+                key: "vitesse", label: "Vitesse", intro: { text: "Réglez la répétition des touches." },
+                fields: [
+                    { key: "repeat", type: "slider", label: "Répétition", min: 0, max: 10, step: 1, default: 4, minLabel: "Lente", maxLabel: "Rapide", format: (v) => `Répétition : ${v}` },
+                    { key: "sound", type: "checkbox", label: "Clic de touche", default: false },
+                    { key: "volume", type: "number", label: "Volume du clic", min: 0, max: 100, default: 50, enabledIf: (v) => v.sound },
+                    { key: "layout", type: "select", label: "Disposition", options: [{ value: "azerty", label: "AZERTY" }, { value: "qwerty", label: "QWERTY" }], default: "azerty" }
+                ]
+            }, {
+                key: "langue", label: "Langue",
+                fields: [{ type: "group", label: "Langue", fields: [
+                    { key: "lang", type: "radio", options: [{ value: "fr", label: "Français", description: "Langue du pays." }, { value: "en", label: "Anglais" }], default: "fr" },
+                    { key: "tag", type: "text", label: "Étiquette", default: "", visibleIf: (v) => v.lang === "en" }
+                ] }]
+            }],
+            apply: (values) => { window.__kbApplied.push(`${values.repeat}/${values.layout}/${values.lang}`); document.body.dataset.kb = values.layout; }
+        });
+        window.Win95ControlPanel.addTab("mouse", {
+            key: "extra", label: "Extra", ns: "mouse-extra",
+            fields: [{ key: "trail", type: "checkbox", label: "Traînée du pointeur", default: false }],
+            apply: (values) => { document.body.dataset.trail = String(values.trail); }
+        });
+    });
+
+    // Barre d'état du Panneau : hauteur minimale, en bas de la fenêtre, la liste prend la place restante.
+    await page.evaluate(() => window.Win95WindowManager.openApp("control-panel"));
+    await page.waitForSelector("[data-control-panel-status]");
+    const geometry = await page.evaluate(() => {
+        const win = document.querySelector("[data-window-app='control-panel']").getBoundingClientRect();
+        const status = document.querySelector("[data-control-panel-status]").getBoundingClientRect();
+        const list = document.querySelector("[data-control-panel-list]").getBoundingClientRect();
+        return { statusHeight: status.height, gapBelow: win.bottom - status.bottom, listBottomGap: status.top - list.bottom };
+    });
+    assert(geometry.statusHeight <= 22, `barre d'état minimale (${geometry.statusHeight} px)`);
+    assert(geometry.gapBelow <= 6 && geometry.listBottomGap <= 1, `barre d'état collée en bas (${JSON.stringify(geometry)})`);
+    assert((await page.locator(".control-panel-grid .list-item-label").allTextContents()).includes("Clavier"), "l'applet ajouté apparaît dans le Panneau");
+
+    // Applet déclaratif : ouverture depuis le Panneau, champs générés, enregistrement.
+    await page.dblclick(".control-panel-grid .list-item[title='Règle le clavier.']");
+    await page.waitForSelector("[data-window-app='clavier'] .property-sheet");
+    const win = "[data-window-app='clavier']";
+    equal(await page.locator(`${win} .property-tab`).allTextContents(), ["Vitesse", "Langue"], "onglets de l'applet");
+    assert(await page.locator(`${win} input[type=number]`).isDisabled(), "enabledIf : volume grisé tant que le clic est décoché");
+    await page.check(`${win} .property-check input`);
+    assert(await page.locator(`${win} input[type=number]`).isEnabled(), "enabledIf : volume actif une fois le clic coché");
+    await page.fill(`${win} input[type=range]`, "7");
+    await page.selectOption(`${win} select`, "qwerty");
+    equal(await page.locator(`${win} .property-status`).textContent(), "Répétition : 7", "barre d'état de l'applet");
+    await page.click(`${win} .property-tab:nth-child(2)`);
+    assert(await page.locator(`${win} .property-field input[type=text]`).isHidden(), "visibleIf : étiquette masquée en français");
+    await page.click(`${win} .property-choice:nth-child(2)`);
+    assert(await page.locator(`${win} .property-field input[type=text]`).isVisible(), "visibleIf : étiquette visible en anglais");
+    assert(await page.locator(`${win} .property-buttons .btn:nth-child(3)`).isEnabled(), "« Appliquer » activé par une modification");
+    await page.click(`${win} .property-buttons .btn:nth-child(3)`);
+    const saved = await page.evaluate(() => ({ values: window.Win95Settings.store("clavier").getAll(), effect: document.body.dataset.kb, calls: window.__kbApplied.slice(-1)[0] }));
+    equal(saved.values, { repeat: 7, sound: true, volume: 50, layout: "qwerty", lang: "en", tag: "" }, "valeurs enregistrées par compte");
+    equal([saved.effect, saved.calls], ["qwerty", "7/qwerty/en"], "l'effet est appliqué");
+    await page.click(`${win} .property-buttons .btn:nth-child(1)`);
+    await page.waitForSelector(win, { state: "detached" });
+
+    // Onglet ajouté à un applet existant.
+    await page.evaluate(() => window.Win95WindowManager.openApp("mouse"));
+    await page.waitForSelector("[data-window-app='mouse'] .property-sheet");
+    const mouse = "[data-window-app='mouse']";
+    equal(await page.locator(`${mouse} .property-tab`).allTextContents(), ["Boutons", "Pointeurs", "Extra"], "onglet ajouté à Souris");
+    await page.click(`${mouse} .property-tab:nth-child(3)`);
+    await page.check(`${mouse} .property-check input`);
+    await page.click(`${mouse} .property-buttons .btn:nth-child(3)`);
+    equal(await page.evaluate(() => [document.body.dataset.trail, window.Win95Settings.get("mouse-extra", "trail")]), ["true", true], "l'onglet ajouté enregistre ses réglages et applique son effet");
+
+    // Droits : l'applet suit le droit du Panneau de configuration.
+    equal(await page.evaluate(() => [window.Win95Security.canOpenApp("clavier"), window.Win95Security.APP_PARENTS.clavier]), [true, "control-panel"], "droits hérités du Panneau");
 });
 
 test("serveur de développement : adresse réseau détectée, fichiers servis, accès hors dossier refusé, QR de terminal", async () => {

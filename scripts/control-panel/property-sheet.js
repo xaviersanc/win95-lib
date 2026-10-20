@@ -6,11 +6,34 @@
     //     tabs: [{ key, label, render(panel, sheet) }],   // render remplit le panneau (appelé une fois par onglet, à la 1re ouverture)
     //     onApply(): { ok, message }|void,                 // enregistre les changements en attente (absent = pas de bouton Appliquer)
     //     onClose(): void,                                 // ferme la fenêtre (OK / Annuler)
-    //     buttons: "ok-cancel-apply" | "close"             // "close" : un seul bouton Fermer (applets sans réglages)
+    //     buttons: "ok-cancel-apply" | "close",            // "close" : un seul bouton Fermer (applets sans réglages)
+    //     id: "mouse"                                      // identifiant de l'applet : reçoit les onglets ajoutés par registerTab(id, …)
     // });
-    // sheet.markDirty() active « Appliquer » ; sheet.setStatus(texte) écrit dans la barre d'état ; sheet.select(clé) change d'onglet.
+    // sheet.markDirty() active « Appliquer » ; sheet.setStatus(texte) écrit dans la barre d'état ; sheet.select(clé) change d'onglet ;
+    // sheet.pending(store) : copie de travail partagée des valeurs d'un store Win95Settings.
+    //
+    // Onglet déclaratif : { key, label, fields: [...], intro?: { icon, text } } au lieu de render() : l'interface est générée par
+    // Win95PropertyFields, les valeurs sont enregistrées dans Win95Settings par « Appliquer » (voir property-fields.js).
+    //
+    // Ajouter un onglet à un applet existant (sans toucher son code) :
+    //   Win95PropertySheet.registerTab("mouse", { key: "extra", label: "Extra", ns: "mouse-extra", fields: [...], apply(values) {…} });
+    // `ns` : espace de noms Win95Settings (défaut « <applet>-<clé de l'onglet> ») ; `apply(values)` : effet du réglage.
 
-    function mount(bodyElement, { tabs, onApply = null, onClose = () => {}, buttons = "ok-cancel-apply" }) {
+    const extraTabs = new Map();
+
+    function registerTab(id, tab, { ns = tab.ns || `${id}-${tab.key}`, apply = tab.apply || null } = {}) {
+        if (!id || !tab?.key || !tab.label) {
+            throw new Error("registerTab : identifiant d'applet, `key` et `label` de l'onglet obligatoires.");
+        }
+        const list = extraTabs.get(id) || [];
+        extraTabs.set(id, list.filter((candidate) => candidate.key !== tab.key).concat(tab.fields ? window.Win95PropertyFields.prepareTab(tab, { ns, apply }) : tab));
+        return tab;
+    }
+
+    function mount(bodyElement, { tabs: ownTabs, id = null, onApply = null, onClose = () => {}, buttons = "ok-cancel-apply" }) {
+        // Copies : les onglets ajoutés par registerTab sont partagés entre les fenêtres ouvertes, l'état de la feuille ne doit pas l'être.
+        const tabs = [...ownTabs, ...(id ? extraTabs.get(id) || [] : [])].map((tab) => ({ ...tab, touched: false }));
+        const pendings = new Map();
         bodyElement.textContent = "";
         const wrapper = document.createElement("div");
         wrapper.className = "property-sheet";
@@ -39,6 +62,12 @@
             setStatus(message) {
                 status.textContent = message || "";
             },
+            pending(store) {
+                if (!pendings.has(store)) {
+                    pendings.set(store, store.getAll());
+                }
+                return pendings.get(store);
+            },
             select(key) {
                 tabs.forEach((tab) => {
                     const active = tab.key === key;
@@ -64,20 +93,32 @@
             return button;
         };
 
-        let applyButton = null;
-        const apply = () => {
-            const result = onApply?.();
-            if (result?.message) {
-                sheet.setStatus(result.message);
+        // Les onglets déclaratifs fournissent leur propre render / apply.
+        tabs.forEach((tab) => {
+            if (tab.fields) {
+                tab.render = (panel) => window.Win95PropertyFields.renderTab(tab, panel, sheet);
+                tab.apply = () => window.Win95PropertyFields.applyTab(tab, sheet);
             }
-            if (!result || result.ok !== false) {
+        });
+
+        let applyButton = null;
+        // « Appliquer » : chaque onglet touché enregistre ses champs, puis le rappel de l'applet ; un échec garde la feuille « modifiée ».
+        const apply = () => {
+            const results = [...tabs.map((tab) => tab.apply?.()), onApply?.()].filter(Boolean);
+            const failed = results.find((result) => result.ok === false);
+            const shown = failed || results.reverse().find((result) => result.message);
+            if (shown?.message) {
+                sheet.setStatus(shown.message);
+            }
+            if (!failed) {
                 sheet.dirty = false;
                 if (applyButton) {
                     applyButton.disabled = true;
                 }
             }
-            return result?.ok !== false;
+            return !failed;
         };
+        const hasApply = Boolean(onApply) || tabs.some((tab) => tab.fields || tab.apply);
 
         if (buttons === "close") {
             makeButton("Fermer", () => onClose(), { primary: true });
@@ -88,7 +129,7 @@
                 }
             }, { primary: true });
             makeButton("Annuler", () => onClose());
-            if (onApply) {
+            if (hasApply) {
                 applyButton = makeButton("Appliquer", apply);
                 applyButton.disabled = true;
             }
@@ -139,6 +180,6 @@
         return fieldset;
     }
 
-    window.Win95PropertySheet = { mount, createGroup };
+    window.Win95PropertySheet = { mount, createGroup, registerTab };
     window.Win95Services?.register?.("Win95PropertySheet", window.Win95PropertySheet);
 })();

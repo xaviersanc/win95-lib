@@ -65,6 +65,8 @@ Démarrer > Panneau de configuration ouvre une fenêtre d'icônes ; un double-cl
 | Ajout/Suppression de programmes | « Supprimer » un programme (Bloc-notes, Paint, Lecteur d'image, Lecteur multimédia) le **cache** pour le compte : il disparaît du menu et ne peut plus être ouvert, même depuis un fichier ; « Installer » le fait réapparaître. Rien n'est effacé. | `win95.programs.hidden.v1.<id>` |
 | Affichage | Onglet Arrière-plan (fond d'écran du Bureau) et onglet Écran de veille. | `win95.wallpaper.<id>`, `win95.screensaver.v1.<id>` |
 
+**Ajouter un réglage ou un applet** : le Panneau est un cadre extensible. `Win95ControlPanel.registerApplet({ key, label, icon, tabs: [{ key, label, fields }], apply(values) })` crée l'icône, la fenêtre (OK / Annuler / Appliquer), les droits et le stockage par compte (`Win95Settings`) ; `Win95ControlPanel.addTab("mouse", { key, label, fields, apply })` ajoute un onglet à un applet existant. Champs disponibles : case à cocher, curseur, nombre, texte, liste déroulante, choix unique, groupes, notes, boutons. Voir [LLM-GUIDE.md](LLM-GUIDE.md) §4.3 bis.
+
 Un compte qui n'a pas accès au Panneau de configuration n'a accès à aucun applet (droit commun, voir `APP_PARENTS` dans `security-manager.js`).
 
 ## Utilisateurs (postes)

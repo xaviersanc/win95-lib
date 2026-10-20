@@ -25,6 +25,7 @@
             this.viewMonth = this.pending.month;
 
             this.sheet = sheets().mount(this.bodyElement, {
+                id: "date-time",
                 tabs: [
                     { key: "date", label: "Date et heure", render: (panel) => this.renderDateTab(panel) },
                     { key: "zone", label: "Fuseau horaire", render: (panel) => this.renderZoneTab(panel) }
