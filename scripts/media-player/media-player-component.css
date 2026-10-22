@@ -374,3 +374,24 @@ body.win95-desktop .tray-media-btn {
 body.win95-desktop .tray-media-btn:disabled {
     color: #808080;
 }
+
+/* Lecteurs YouTube dont la fenêtre est fermée : hors écran, mais de taille normale (le son continue). */
+body.win95-desktop .mp-background {
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    width: 320px;
+    height: 200px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+body.win95-desktop .mp-background iframe {
+    width: 320px;
+    height: 200px;
+    border: 0;
+}
+
+body.win95-desktop .tray-media-btn[hidden] {
+    display: none;
+}

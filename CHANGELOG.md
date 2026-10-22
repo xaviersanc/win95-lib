@@ -2,13 +2,17 @@
 
 Versionnement sémantique : une version **majeure** pour tout changement incompatible de l'API d'extension, de la configuration, des fournisseurs, des clés de stockage, des événements `win95:*` ou de l'ordre de chargement.
 
-## Non publié — Lecteur multimédia : barre des tâches et YouTube
+## 1.5.0 — Lecteur multimédia : barre des tâches, YouTube, playlists, diffusion
+
+Version mineure : rien d'existant ne change de contrat. Ajouts de clés de stockage et d'événements consommés, et de sources dans la CSP.
 
 **Ajouts**
-- **Mini-lecteur dans la barre des tâches**, à gauche du compte : titre de la piste (il défile en boucle s'il est trop long), précédent, lecture/pause, suivant. Il suit le lecteur qui joue et disparaît avec la dernière fenêtre fermée.
-- **Fichier > Ouvrir un lien YouTube… (Ctrl+L)** : lien youtube.com, music.youtube.com, youtu.be, /shorts, /embed. Lecture par le lecteur officiel (API IFrame, domaine youtube-nocookie.com), cadre vidéo visible dans la fenêtre. Les publicités éventuelles restent celles de YouTube : la bibliothèque ne les retire pas.
-- `Win95MediaPlayer.parseYouTubeId(lien)`.
-- CSP (`vercel/vercel.json`) : `script-src https://www.youtube.com` et `frame-src https://www.youtube-nocookie.com https://www.youtube.com`. Un projet avec sa propre CSP doit les ajouter.
+- **Mini-lecteur dans la barre des tâches**, à gauche du compte : titre de la piste (il défile en boucle s'il est trop long), précédent, lecture/pause, suivant.
+- **La fenêtre peut se fermer sans couper la musique** : tant qu'il y a des pistes, le lecteur continue en arrière-plan, la fenêtre disparaît de la barre des tâches et le mini-lecteur reste (bouton « Arrêter et fermer le lecteur » ; clic sur le titre = rouvrir la fenêtre, qui reprend le même lecteur). Une vidéo YouTube refait un bref saut à la fermeture et à la réouverture (le cadre est recréé à la même position). Fin de session (déconnexion, changement de compte) = fin des lecteurs en arrière-plan.
+- **Fichier > Ouvrir un lien YouTube… (Ctrl+L)** : vidéo ou titre de youtube.com, music.youtube.com, youtu.be (/shorts, /embed), ou **playlist** (`/playlist?list=…`, ou une vidéo d'une playlist au choix) limitée à **100 titres**. Lecture par le lecteur officiel (API IFrame, cadre créé avec `referrerpolicy` : sans Referer YouTube répond « erreur 153 »), cadre vidéo visible dans la fenêtre. Titres récupérés par oEmbed. Les publicités éventuelles restent celles de YouTube : la bibliothèque ne les retire pas.
+- **Diffusion synchronisée par l'administrateur** (Supabase configuré) : Fichier > « Diffuser à tous les utilisateurs » envoie l'état du lecteur (pistes YouTube, piste courante, lecture/pause, position) sur un canal Supabase Realtime *broadcast* `win95-media-sync` (aucune table, aucun SQL), renvoyé toutes les 4 s pour recaler la position et faire rejoindre les utilisateurs qui arrivent en cours de route. Les utilisateurs le reçoivent même sans fenêtre ouverte (lecteur en arrière-plan) ; Fichier > « Suivre la diffusion de l'administrateur » (par compte) le désactive ; un utilisateur qui met en pause reste en pause jusqu'au prochain changement de l'administrateur. Les fichiers locaux ne se diffusent pas. Modèle « entre proches » : un message n'est pas authentifié, seul son format est vérifié.
+- Clé de stockage `win95.mediaPlayer.v1.<id>` : champ `follow`. API : `Win95MediaPlayer.parseYouTubeId`, `parseYouTubePlaylistId`, `receiveBroadcast`, `shutdown`.
+- CSP (`vercel/vercel.json`) : `script-src https://www.youtube.com`, `frame-src https://www.youtube.com https://www.youtube-nocookie.com`, `connect-src https://www.youtube.com` (oEmbed). Un projet avec sa propre CSP doit les ajouter.
 
 ## 1.4.1 — Double-clic et glisser-déposer de l'explorateur
 

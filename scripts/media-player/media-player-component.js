@@ -57,6 +57,90 @@
         return /^[\w-]{11}$/.test(id || "") ? id : null;
     }
 
+    // Identifiant d'une playlist depuis un lien /playlist?list=… ou watch?v=…&list=… (sinon null).
+    function parseYouTubePlaylistId(text) {
+        const value = String(text || "").trim();
+        let url;
+        try {
+            url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+        } catch {
+            return null;
+        }
+        const host = url.hostname.replace(/^(www\.|m\.|music\.)/, "");
+        const list = url.searchParams.get("list");
+        return (host === "youtube.com" || host === "youtube-nocookie.com") && /^[\w-]{10,64}$/.test(list || "") ? list : null;
+    }
+
+    const MAX_PLAYLIST = 100;
+    const VIDEO_ID = /^[\w-]{11}$/;
+
+    // Conteneur permanent des lecteurs YouTube quand leur fenêtre est fermée : hors écran mais de taille normale.
+    function backgroundHost() {
+        let host = document.querySelector("[data-mp-background]");
+        if (!host) {
+            host = document.createElement("div");
+            host.dataset.mpBackground = "";
+            host.className = "mp-background";
+            host.setAttribute("aria-hidden", "true");
+            document.body.appendChild(host);
+        }
+        return host;
+    }
+
+    // Vidéos d'une playlist (YouTube en renvoie 200 au plus), tronquées à MAX_PLAYLIST. Rejette si elle est privée ou introuvable.
+    async function fetchPlaylist(listId) {
+        const YT = await loadYouTubeApi();
+        return new Promise((resolve, reject) => {
+            const frame = document.createElement("iframe");
+            frame.src = `https://www.youtube.com/embed/videoseries?${new URLSearchParams({ list: listId, enablejsapi: "1", origin: window.location.origin })}`;
+            frame.referrerPolicy = "strict-origin-when-cross-origin";
+            frame.title = "Playlist YouTube";
+            backgroundHost().appendChild(frame);
+            let player = null;
+            let poll = null;
+            const end = (error, ids) => {
+                clearTimeout(timer);
+                clearInterval(poll);
+                try {
+                    player?.destroy();
+                } catch { /* cadre déjà retiré */ }
+                frame.remove();
+                return error ? reject(error) : resolve(ids);
+            };
+            const timer = setTimeout(() => end(new Error("Playlist introuvable ou délai dépassé.")), 15000);
+            player = new YT.Player(frame, {
+                events: {
+                    onReady: () => {
+                        let tries = 0;
+                        poll = setInterval(() => {
+                            const ids = (player.getPlaylist?.() || []).filter((id) => VIDEO_ID.test(id));
+                            tries += 1;
+                            if (ids.length > 0 || tries > 24) {
+                                end(ids.length ? null : new Error("Playlist vide ou privée."), ids.slice(0, MAX_PLAYLIST));
+                            }
+                        }, 500);
+                    },
+                    onError: (event) => end(new Error(`Playlist indisponible (erreur ${event.data}).`))
+                }
+            });
+        });
+    }
+
+    // Titre et chaîne d'une vidéo (oEmbed) ; null si indisponible (CSP, réseau, vidéo privée).
+    async function fetchVideoInfo(id) {
+        try {
+            const response = await fetch(`https://www.youtube.com/oembed?${new URLSearchParams({ url: `https://www.youtube.com/watch?v=${id}`, format: "json" })}`);
+            const data = response.ok ? await response.json() : null;
+            return data ? { title: String(data.title || "").slice(0, 200), author: String(data.author_name || "").slice(0, 100) } : null;
+        } catch {
+            return null;
+        }
+    }
+
+    const youtubeTrack = (id, title = "", author = "") => ({
+        fileName: `YouTube ${id}`, artist: author || "YouTube", title: title || `YouTube (${id})`, url: `youtube:${id}`, youtube: id, owned: false, duration: null
+    });
+
     let youtubeApi = null;
     function loadYouTubeApi() {
         if (window.YT?.Player) {
@@ -93,6 +177,34 @@
             this.wantPlay = false;
             this.timer = null;
             this.volumeValue = 0.8;
+            this.frame = null;
+            this.resume = null;
+            this.lastTime = 0;
+            this.lastPlaying = false;
+            this.startAt = null;      // position à rejoindre dès que la lecture démarre (synchronisation)
+        }
+
+        // Change de conteneur (fermeture / réouverture de la fenêtre) : le cadre est recréé et reprend à la même position.
+        relocate(host, { resumable = true } = {}) {
+            const resume = resumable && this.player && this.videoId ? { time: this.lastTime, playing: this.lastPlaying } : null;
+            this.stopTimer();
+            try {
+                this.player?.destroy();
+            } catch { /* cadre déjà retiré avec la fenêtre */ }
+            this.frame?.remove();
+            this.player = null;
+            this.frame = null;
+            this.ready = null;
+            this.host = host;
+            this.state = -1;
+            if (!resume) {
+                this.src = null;
+                this.videoId = null;
+            } else {
+                this.resume = resume;
+                this.wantPlay = resume.playing;
+                this.ensure().catch(() => this.emit("error", "api"));
+            }
         }
 
         emit(type, detail) {
@@ -112,7 +224,7 @@
         }
 
         get currentTime() {
-            return this.videoId && this.player?.getCurrentTime ? this.player.getCurrentTime() || 0 : 0;
+            return this.videoId && this.player?.getCurrentTime ? this.player.getCurrentTime() || this.lastTime : this.lastTime;
         }
 
         set currentTime(value) {
@@ -146,30 +258,41 @@
         load() {
             this.videoId = String(this.src || "").replace(/^youtube:/, "") || null;
             this.state = -1;
+            this.lastTime = 0;
+            this.resume = null;
             const id = this.videoId;
             this.ensure().then(() => {
-                if (id && id === this.videoId) {
+                if (id && id === this.videoId && this.state === -1) {
                     this.player.cueVideoById(id);
                 }
-            }).catch(() => this.emit("error"));
+            }).catch(() => this.emit("error", "api"));
         }
 
+        // Le cadre est créé ici (et non par l'API) pour lui imposer l'en-tête Referer : sans lui, YouTube répond « erreur 153 ».
         ensure() {
             this.ready ||= loadYouTubeApi().then((YT) => new Promise((resolve) => {
-                const mount = document.createElement("div");
-                this.host.appendChild(mount);
-                this.player = new YT.Player(mount, {
-                    width: "100%",
-                    height: "100%",
-                    host: "https://www.youtube-nocookie.com",
-                    playerVars: { playsinline: 1, controls: 0, disablekb: 1, rel: 0, modestbranding: 1, origin: window.location.origin },
+                const params = new URLSearchParams({ enablejsapi: "1", playsinline: "1", controls: "0", disablekb: "1", rel: "0", modestbranding: "1", origin: window.location.origin });
+                const resume = this.resume;
+                this.resume = null;
+                if (resume) {
+                    params.set("start", String(Math.floor(resume.time)));
+                    params.set("autoplay", resume.playing ? "1" : "0");
+                }
+                const frame = document.createElement("iframe");
+                this.frame = frame;
+                frame.src = `https://www.youtube.com/embed/${this.videoId || ""}?${params}`;
+                frame.referrerPolicy = "strict-origin-when-cross-origin";
+                frame.allow = "autoplay; encrypted-media; picture-in-picture";
+                frame.title = "Lecteur YouTube";
+                this.host.appendChild(frame);
+                this.player = new YT.Player(frame, {
                     events: {
                         onReady: () => {
                             this.player.setVolume(Math.round(this.volumeValue * 100));
                             resolve();
                         },
                         onStateChange: (event) => this.onState(event.data),
-                        onError: () => this.emit("error")
+                        onError: (event) => this.videoId && this.emit("error", event.data)
                     }
                 });
             })).catch((error) => {
@@ -191,7 +314,15 @@
 
         onState(state) {
             this.state = state;
+            this.lastPlaying = state === 1 || state === 3;
             if (state === 1) {
+                if (this.startAt !== null) {
+                    const target = this.startAt;
+                    this.startAt = null;
+                    if (Math.abs(this.currentTime - target) > 1.5) {
+                        this.player.seekTo(target, true);
+                    }
+                }
                 this.startTimer();
                 this.readMetaData();
                 this.emit("durationchange");
@@ -217,7 +348,10 @@
 
         startTimer() {
             this.stopTimer();
-            this.timer = setInterval(() => this.emit("timeupdate"), 500);
+            this.timer = setInterval(() => {
+                this.lastTime = this.player?.getCurrentTime?.() || this.lastTime;
+                this.emit("timeupdate");
+            }, 500);
         }
 
         stopTimer() {
@@ -227,8 +361,12 @@
 
         destroy() {
             this.stopTimer();
-            this.player?.destroy?.();
+            try {
+                this.player?.destroy?.();
+            } catch { /* cadre déjà retiré */ }
+            this.frame?.remove();
             this.player = null;
+            this.frame = null;
         }
     }
 
@@ -262,12 +400,16 @@
                 volume: Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : 0.8,
                 shuffle: saved.shuffle === true,
                 repeat: ["off", "all", "one"].includes(saved.repeat) ? saved.repeat : "off",
-                showList: saved.showList !== false
+                showList: saved.showList !== false,
+                follow: saved.follow !== false
             };
             this.tracks = [];
             this.index = 0;
             this.showRemaining = false;
             this.destroyed = false;
+            this.orphaned = false;      // fenêtre fermée : le lecteur continue en arrière-plan, piloté par la barre des tâches
+            this.broadcastSig = null;   // liste reçue de la diffusion de l'administrateur
+            this.lastCast = null;
             this.build();
             this.bindAudio();
             this.bindWindow();
@@ -275,6 +417,47 @@
             tray.join(this);
             this.renderList();
             this.sync();
+            if (!rootElement.isConnected) {
+                this.orphan();          // lecteur créé sans fenêtre (diffusion reçue)
+            }
+        }
+
+        // --- Fenêtre fermée / rouverte ------------------------------------------------------------------------------
+
+        // La fenêtre se ferme : le son continue (le mini-lecteur de la barre des tâches le pilote).
+        orphan() {
+            this.orphaned = true;
+            this.youtube.relocate(backgroundHost(), { resumable: Boolean(this.current?.youtube) });
+            tray.refresh(this, !this.audio.paused);
+        }
+
+        // Une fenêtre s'ouvre : elle reprend l'interface de ce lecteur (le son n'est pas interrompu, sauf un bref saut pour une vidéo YouTube).
+        adopt(rootElement) {
+            const previousBody = this.bodyElement;
+            this.rootElement = rootElement;
+            this.bodyElement = rootElement.querySelector("[data-app-body]");
+            this.bodyElement.append(...previousBody.childNodes);
+            rootElement.__win95MediaPlayerInstance = this;
+            this.orphaned = false;
+            this.bindWindow();
+            this.refs.video.hidden = !this.current?.youtube;
+            this.youtube.relocate(this.refs.video, { resumable: Boolean(this.current?.youtube) });
+            this.sync();
+            this.fit();
+        }
+
+        // Fin définitive : plus de son, plus de mini-lecteur.
+        destroy() {
+            if (this.destroyed) {
+                return;
+            }
+            this.destroyed = true;
+            diffusion.release(this);
+            tray.leave(this);
+            this.nativeAudio.pause();
+            this.nativeAudio.removeAttribute("src");
+            this.youtube.destroy();
+            this.tracks.filter((track) => track.owned).forEach((track) => URL.revokeObjectURL(track.url));
         }
 
         // Moteur actif : <audio> pour les fichiers, lecteur YouTube pour les liens YouTube.
@@ -298,6 +481,11 @@
                         { label: "Ouvrir un lien YouTube…", hint: "Ctrl+L", onSelect: () => void this.addYouTube() },
                         { label: "Fermer la liste", disabled: this.tracks.length === 0, onSelect: () => this.clear() },
                         { separator: true },
+                        ...(diffusion.available() ? [
+                            ...(diffusion.isAdmin() ? [{ label: "Diffuser à tous les utilisateurs", checked: diffusion.caster === this, disabled: diffusion.caster !== this && !this.current?.youtube, onSelect: () => diffusion.toggle(this) }] : []),
+                            { label: "Suivre la diffusion de l'administrateur", checked: this.settings.follow, onSelect: () => this.update({ follow: !this.settings.follow }, { render: false }) },
+                            { separator: true }
+                        ] : []),
                         { label: "Quitter", onSelect: () => window.Win95WindowManager?.closeWindow(this.rootElement) }
                     ]
                 },
@@ -358,11 +546,12 @@
                     <div class="mp-list-head"><span>Piste</span><span>Titre</span><span>Durée</span></div>
                     <div class="mp-list windows-scrollbar" role="listbox" aria-label="Liste de lecture" data-mp-list></div>
                 </div>
-                <div class="mp-status explorer-status" data-mp-status>Arrêté</div>
-                <audio class="mp-audio" data-mp-audio preload="metadata"></audio>`;
+                <div class="mp-status explorer-status" data-mp-status>Arrêté</div>`;
             this.bodyElement.appendChild(player);
             this.playerElement = player;
-            this.nativeAudio = player.querySelector("[data-mp-audio]");
+            // Jamais inséré dans le document : un <audio> dont le nœud est retiré (fenêtre fermée) serait mis en pause.
+            this.nativeAudio = new Audio();
+            this.nativeAudio.preload = "metadata";
             this.youtube = new YouTubeEngine(player.querySelector("[data-mp-video]"));
             this.refs = {
                 video: player.querySelector("[data-mp-video]"),
@@ -404,11 +593,11 @@
         // Les événements des deux moteurs sont écoutés ; seuls ceux du moteur actif comptent.
         bindAudio() {
             [this.nativeAudio, this.youtube].forEach((engine) => {
-                const active = (handler) => () => engine === this.audio && handler();
+                const active = (handler) => (event) => engine === this.audio && handler(event);
                 ["loadedmetadata", "timeupdate", "play", "pause", "seeked", "durationchange"].forEach((type) => engine.addEventListener(type, active(() => this.sync())));
                 engine.addEventListener("ended", active(() => this.ended()));
-                engine.addEventListener("error", active(() => {
-                    this.refs.status.textContent = engine === this.youtube ? "Vidéo YouTube illisible ou non disponible." : "Fichier audio illisible.";
+                engine.addEventListener("error", active((event) => {
+                    this.refs.status.textContent = engine === this.youtube ? `Vidéo YouTube indisponible (erreur ${event.detail ?? "inconnue"}).` : "Fichier audio illisible.";
                     this.sync();
                 }));
             });
@@ -417,6 +606,7 @@
                 this.tracks.filter((track) => track.youtube === videoId).forEach((track) => {
                     track.title = title;
                     track.artist = author;
+                    track.titled = true;
                 });
                 this.renderList();
                 this.sync();
@@ -452,14 +642,49 @@
                     this.addFiles(event.dataTransfer.files);
                 }
             });
+            // Sans piste, le lecteur disparaît avec sa fenêtre ; sinon il continue en arrière-plan (mini-lecteur de la barre des tâches).
             root.addEventListener("win95:window-closed", () => {
-                this.destroyed = true;
-                tray.leave(this);
-                this.nativeAudio.pause();
-                this.nativeAudio.removeAttribute("src");
-                this.youtube.destroy();
-                this.tracks.filter((track) => track.owned).forEach((track) => URL.revokeObjectURL(track.url));
+                if (this.tracks.length === 0) {
+                    this.destroy();
+                } else {
+                    this.orphan();
+                }
             }, { once: true });
+        }
+
+        // État envoyé par l'administrateur : { ids, titles, index, playing, position }. Les changements de piste et de lecture/pause
+        // s'appliquent une fois ; ensuite seule la dérive de position est corrigée (un utilisateur qui met en pause reste en pause).
+        applyBroadcast(message) {
+            const signature = message.ids.join(",");
+            const newList = this.broadcastSig !== signature;
+            const newTrack = newList || this.index !== message.index;
+            if (newList) {
+                this.broadcastSig = signature;
+                this.tracks.filter((track) => track.owned).forEach((track) => URL.revokeObjectURL(track.url));
+                this.tracks = message.ids.map((id) => youtubeTrack(id, message.titles[id]?.title, message.titles[id]?.author));
+                this.tracks.forEach((track) => {
+                    track.titled = Boolean(message.titles[track.youtube]?.title);
+                });
+                this.renderList();
+                void this.fillTitles();
+            }
+            if (newTrack) {
+                this.index = message.index;
+                this.load(false);
+                this.youtube.startAt = message.position;
+            }
+            const engine = this.audio;
+            if (newTrack || !this.lastCast || this.lastCast.playing !== message.playing) {
+                if (message.playing) {
+                    this.play();
+                } else {
+                    engine.pause();
+                }
+            } else if (message.playing && !engine.paused && Math.abs(engine.currentTime - message.position) > 2) {
+                engine.currentTime = message.position;
+            }
+            this.lastCast = { playing: message.playing };
+            this.sync();
         }
 
         // --- Réglages -----------------------------------------------------------------------------------------------
@@ -476,6 +701,9 @@
         // La fenêtre s'adapte à l'affichage (ou non) de la liste de lecture.
         fit() {
             this.refs.listWrap.hidden = !this.settings.showList;
+            if (!this.rootElement.isConnected) {
+                return;
+            }
             utils().fitWindow(this.rootElement, this.playerElement, { extraHeight: this.bodyElement.querySelector(".win95-menubar").offsetHeight + 1 });
         }
 
@@ -518,22 +746,67 @@
             this.appendTracks(added);
         }
 
-        // Fichier > Ouvrir un lien YouTube… : liens youtube.com, music.youtube.com, youtu.be.
+        // Fichier > Ouvrir un lien YouTube… : vidéo (youtube.com, music.youtube.com, youtu.be) ou playlist (100 titres au plus).
         async addYouTube() {
             const link = await window.Win95Dialog.prompt({
                 title: "Ouvrir un lien YouTube",
-                message: "Collez le lien d'une vidéo YouTube ou d'un titre YouTube Music :",
+                message: "Collez le lien d'une vidéo, d'un titre ou d'une playlist (100 titres au plus) YouTube ou YouTube Music :",
                 confirmLabel: "Ouvrir"
             });
             if (link === null || link === undefined || this.destroyed) {
                 return;
             }
             const id = parseYouTubeId(link);
-            if (!id) {
+            const listId = parseYouTubePlaylistId(link);
+            if (!id && !listId) {
                 await window.Win95Dialog.error({ title: "Lien YouTube", message: "Ce lien n'est pas un lien YouTube ou YouTube Music valide." });
                 return;
             }
-            this.appendTracks([{ fileName: `YouTube ${id}`, artist: "YouTube", title: `YouTube (${id})`, url: `youtube:${id}`, youtube: id, owned: false, duration: null }]);
+            // Une vidéo dans une playlist : au choix de l'utilisateur.
+            const wholeList = Boolean(listId) && (!id || await window.Win95Dialog.confirm({
+                title: "Lien YouTube",
+                message: `Ce lien désigne une vidéo dans une playlist.\nAjouter toute la playlist (${MAX_PLAYLIST} titres au plus) ?`,
+                confirmLabel: "Toute la playlist",
+                cancelLabel: "Cette vidéo",
+                icon: "msg_question-0.png"
+            }));
+            if (!wholeList) {
+                this.appendTracks([youtubeTrack(id)]);
+                void this.fillTitles();
+                return;
+            }
+            this.refs.status.textContent = "Chargement de la playlist…";
+            try {
+                const ids = await fetchPlaylist(listId);
+                if (!this.destroyed) {
+                    this.appendTracks(ids.map((videoId) => youtubeTrack(videoId)));
+                    void this.fillTitles();
+                }
+            } catch (error) {
+                this.sync();
+                await window.Win95Dialog.error({ title: "Playlist YouTube", message: `${error.message}\nVérifiez que la playlist est publique ou non répertoriée.` });
+            }
+        }
+
+        // Titres des pistes YouTube encore nommées par leur identifiant (oEmbed), trois requêtes à la fois.
+        async fillTitles() {
+            const queue = this.tracks.filter((track) => track.youtube && !track.titled);
+            queue.forEach((track) => {
+                track.titled = true;
+            });
+            const worker = async () => {
+                while (queue.length && !this.destroyed) {
+                    const track = queue.shift();
+                    const info = await fetchVideoInfo(track.youtube);
+                    if (info?.title) {
+                        track.title = info.title;
+                        track.artist = info.author || track.artist;
+                        this.renderList();
+                        this.sync();
+                    }
+                }
+            };
+            await Promise.all([worker(), worker(), worker()]);
         }
 
         appendTracks(added) {
@@ -760,7 +1033,7 @@
             const state = !track ? "Arrêté" : playing ? "Lecture" : position > 0 && !audio.ended ? "En pause" : "Arrêté";
             const mode = [this.settings.shuffle ? "aléatoire" : "", this.settings.repeat === "all" ? "répétition de la liste" : this.settings.repeat === "one" ? "répétition de la piste" : ""].filter(Boolean).join(", ");
             if (!refs.status.dataset.sticky || state !== "Arrêté") {
-                refs.status.textContent = `${state}${this.tracks.length ? ` — ${this.tracks.length} piste${this.tracks.length > 1 ? "s" : ""}` : ""}${mode ? ` (${mode})` : ""}`;
+                refs.status.textContent = `${state}${this.tracks.length ? ` — ${this.tracks.length} piste${this.tracks.length > 1 ? "s" : ""}` : ""}${mode ? ` (${mode})` : ""}${diffusion.caster === this ? " — diffusé à tous" : ""}`;
             }
             const titleElement = this.rootElement.querySelector(".title-bar-text");
             if (titleElement) {
@@ -775,6 +1048,7 @@
                 this.fit();
             }
             tray.refresh(this, playing);
+            diffusion.notify(this);
         }
     }
 
@@ -812,15 +1086,23 @@
                 <div class="tray-media-title" data-tm-title><span></span></div>
                 <button type="button" class="tray-media-btn" data-tm="prev" title="Piste précédente" aria-label="Piste précédente">${ICONS.prev}</button>
                 <button type="button" class="tray-media-btn" data-tm="toggle" title="Lecture" aria-label="Lecture">${ICONS.play}</button>
-                <button type="button" class="tray-media-btn" data-tm="next" title="Piste suivante" aria-label="Piste suivante">${ICONS.next}</button>`;
+                <button type="button" class="tray-media-btn" data-tm="next" title="Piste suivante" aria-label="Piste suivante">${ICONS.next}</button>
+                <button type="button" class="tray-media-btn" data-tm="close" title="Arrêter et fermer le lecteur" aria-label="Arrêter et fermer le lecteur">${ICONS.stop}</button>`;
             anchor.parentElement.insertBefore(element, anchor);
             element.addEventListener("click", (event) => {
                 const action = event.target.closest("[data-tm]")?.dataset.tm;
                 const player = this.owner;
-                if (!action || !player) {
+                if (!player) {
                     return;
                 }
-                ({ prev: () => player.previous(), next: () => player.next(), toggle: () => player.togglePlay() })[action]?.();
+                if (event.target.closest("[data-tm-title]")) {
+                    // Un clic sur le titre rouvre la fenêtre du lecteur quand il tourne en arrière-plan.
+                    if (player.orphaned) {
+                        window.Win95WindowManager?.openApp("audio-player");
+                    }
+                    return;
+                }
+                ({ prev: () => player.previous(), next: () => player.next(), toggle: () => player.togglePlay(), close: () => player.destroy() })[action]?.();
             });
             this.element = element;
             return element;
@@ -857,6 +1139,8 @@
                     titleBox.classList.add("is-scrolling");
                 }
             }
+            element.querySelector("[data-tm='close']").hidden = !player.orphaned;
+            titleBox.style.cursor = player.orphaned ? "pointer" : "default";
             const toggle = element.querySelector("[data-tm='toggle']");
             toggle.innerHTML = playing ? ICONS.pause : ICONS.play;
             toggle.title = toggle.ariaLabel = playing ? "Pause" : "Lecture";
@@ -866,7 +1150,175 @@
         }
     };
 
+    // Diffusion synchronisée : l'administrateur envoie l'état de son lecteur (pistes YouTube, piste courante, lecture, position) sur un
+    // canal Supabase Realtime « broadcast » (aucune table, aucun SQL) ; son état est renvoyé toutes les 4 s, ce qui recale la position
+    // et fait rejoindre les utilisateurs qui se connectent en cours de route. Les fichiers locaux ne se diffusent pas.
+    // Modèle « entre proches » (clé anon publique) : un message reçu n'est pas authentifié, seul son format est vérifié.
+    const diffusion = {
+        channel: null,
+        caster: null,
+        heartbeat: null,
+        lastKey: "",
+
+        client() {
+            return window.Win95Supabase?.getClient?.() || window.Win95Services?.get?.("SupabaseClient") || null;
+        },
+
+        available() {
+            return typeof this.client()?.channel === "function";
+        },
+
+        isAdmin() {
+            return Boolean(window.Win95Security?.isAdmin?.());
+        },
+
+        start() {
+            if (this.channel || !this.available() || !window.Win95Security?.getCurrentUser?.()) {
+                return;
+            }
+            try {
+                this.channel = this.client().channel("win95-media-sync", { config: { broadcast: { self: false } } })
+                    .on("broadcast", { event: "sync" }, ({ payload }) => this.receive(payload))
+                    .subscribe();
+            } catch (error) {
+                console.warn("[Win95MediaPlayer] Diffusion indisponible", error);
+            }
+        },
+
+        stop() {
+            if (this.caster) {
+                this.send({ type: "stop" });
+            }
+            clearInterval(this.heartbeat);
+            this.heartbeat = null;
+            this.caster = null;
+            this.lastKey = "";
+            if (this.channel) {
+                this.client()?.removeChannel?.(this.channel);
+                this.channel = null;
+            }
+        },
+
+        send(payload) {
+            this.channel?.send({ type: "broadcast", event: "sync", payload });
+        },
+
+        toggle(player) {
+            if (this.caster === player) {
+                this.release(player);
+                player.sync();
+                return;
+            }
+            this.start();
+            if (!this.channel) {
+                return;
+            }
+            if (this.caster) {
+                this.caster.sync();
+            }
+            this.caster = player;
+            this.lastKey = "";
+            clearInterval(this.heartbeat);
+            this.heartbeat = setInterval(() => this.notify(player, true), 4000);
+            this.notify(player, true);
+            player.sync();
+        },
+
+        // Le lecteur diffuseur s'arrête de diffuser (désactivation, fermeture définitive) : les auditeurs s'arrêtent.
+        release(player) {
+            if (this.caster !== player) {
+                return;
+            }
+            clearInterval(this.heartbeat);
+            this.heartbeat = null;
+            this.caster = null;
+            this.lastKey = "";
+            this.send({ type: "stop" });
+        },
+
+        message(player) {
+            const youtubeTracks = player.tracks.filter((track) => track.youtube);
+            const current = player.current;
+            if (!current?.youtube) {
+                return null;
+            }
+            const titles = {};
+            youtubeTracks.filter((track) => track.titled).forEach((track) => {
+                titles[track.youtube] = { title: track.title, author: track.artist };
+            });
+            return {
+                type: "state",
+                ids: youtubeTracks.map((track) => track.youtube),
+                titles,
+                index: youtubeTracks.indexOf(current),
+                playing: !player.audio.paused,
+                position: Math.round(player.audio.currentTime * 10) / 10
+            };
+        },
+
+        // Appelé par sync() : envoie dès qu'une piste ou l'état lecture/pause change ; `force` renvoie (battement de cœur).
+        notify(player, force = false) {
+            if (this.caster !== player || !this.channel) {
+                return;
+            }
+            const message = this.message(player);
+            if (!message) {
+                return;
+            }
+            const key = `${message.ids.join(",")}|${message.index}|${message.playing}`;
+            if (force || key !== this.lastKey) {
+                this.lastKey = key;
+                this.send(message);
+            }
+        },
+
+        receive(payload) {
+            if (!payload || this.caster || this.readFollow() === false) {
+                return;
+            }
+            if (payload.type === "stop") {
+                [...tray.players].filter((player) => player.broadcastSig).forEach((player) => {
+                    player.broadcastSig = null;
+                    player.lastCast = null;
+                    player.audio.pause();
+                    if (player.orphaned) {
+                        player.destroy();
+                    } else {
+                        player.clear();
+                    }
+                });
+                return;
+            }
+            const ids = Array.isArray(payload.ids) ? payload.ids.filter((id) => typeof id === "string" && VIDEO_ID.test(id)).slice(0, MAX_PLAYLIST) : [];
+            if (payload.type !== "state" || ids.length === 0 || !Number.isInteger(payload.index) || payload.index < 0 || payload.index >= ids.length) {
+                return;
+            }
+            const titles = {};
+            Object.entries(payload.titles && typeof payload.titles === "object" ? payload.titles : {}).slice(0, MAX_PLAYLIST).forEach(([id, info]) => {
+                if (VIDEO_ID.test(id) && typeof info?.title === "string") {
+                    titles[id] = { title: info.title.slice(0, 200), author: String(info.author || "").slice(0, 100) };
+                }
+            });
+            const message = { ids, titles, index: payload.index, playing: payload.playing === true, position: Number.isFinite(payload.position) ? Math.max(0, payload.position) : 0 };
+            const live = [...tray.players].filter((player) => !player.destroyed);
+            const player = live.find((candidate) => candidate.broadcastSig) || tray.owner || live[0] || service.createBackground();
+            player?.applyBroadcast(message);
+        },
+
+        readFollow() {
+            const saved = utils().readStoredJson(`${STORAGE_PREFIX}.${utils().getCurrentUserId()}`, {}) || {};
+            return saved.follow !== false;
+        }
+    };
+
     const service = {
+        // Lecteur sans fenêtre (diffusion reçue alors qu'aucun lecteur n'est ouvert).
+        createBackground() {
+            const root = document.createElement("div");
+            root.innerHTML = '<div data-app-body></div>';
+            return new Player(root);
+        },
+
         attach(rootElement) {
             if (!rootElement) {
                 return null;
@@ -874,9 +1326,21 @@
             if (rootElement.__win95MediaPlayerInstance) {
                 return rootElement.__win95MediaPlayerInstance;
             }
+            // Un lecteur resté en arrière-plan (fenêtre fermée) reprend son interface dans la nouvelle fenêtre.
+            const background = [...tray.players].find((candidate) => candidate.orphaned && !candidate.destroyed);
+            if (background) {
+                background.adopt(rootElement);
+                return background;
+            }
             const player = new Player(rootElement);
             player.fit();
             return player;
+        },
+
+        // Fin de session (déconnexion, changement de compte) : plus aucun lecteur en arrière-plan.
+        shutdown() {
+            diffusion.stop();
+            [...tray.players].filter((player) => player.orphaned).forEach((player) => player.destroy());
         },
 
         // Ouvre les pistes dans le lecteur (nouvelle fenêtre si forceNewWindow, sinon la fenêtre ouverte) et les joue.
@@ -893,6 +1357,17 @@
     };
 
     service.parseYouTubeId = parseYouTubeId;
+    service.parseYouTubePlaylistId = parseYouTubePlaylistId;
+    service.receiveBroadcast = (payload) => diffusion.receive(payload);
+
+    // Écoute de la diffusion tant qu'un compte est connecté ; fin de session = fin des lecteurs en arrière-plan.
+    const startSession = () => setTimeout(() => {
+        service.shutdown();
+        diffusion.start();
+    }, 0);
+    window.addEventListener("win95:auth-changed", startSession);
+    window.addEventListener("win95:auth-logout", () => setTimeout(() => service.shutdown(), 0));
+    window.addEventListener("win95:lib-loaded", () => diffusion.start());
     window.Win95MediaPlayer = service;
     window.Win95Services?.register?.("Win95MediaPlayer", service);
 })();

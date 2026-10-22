@@ -656,8 +656,54 @@ test("lecteur multimédia : ouverture, lecture, pause, pistes", async (page) => 
     assert((await player.locator("[data-mp-status]").textContent()).startsWith("Lecture"), "lecture depuis la barre des tâches");
     // Liens YouTube : tous les formats reconnus, les autres refusés.
     equal(await page.evaluate(() => ["https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=x", "https://music.youtube.com/watch?v=dQw4w9WgXcQ", "https://youtu.be/dQw4w9WgXcQ?t=3", "youtube.com/shorts/dQw4w9WgXcQ", "https://exemple.com/watch?v=dQw4w9WgXcQ", "n'importe quoi"].map((l) => window.Win95MediaPlayer.parseYouTubeId(l))), ["dQw4w9WgXcQ", "dQw4w9WgXcQ", "dQw4w9WgXcQ", "dQw4w9WgXcQ", null, null], "analyse des liens YouTube");
+    // Fermer la fenêtre : la musique continue, le mini-lecteur reste (avec son bouton d'arrêt) et la fenêtre disparaît de la barre des tâches.
     await page.evaluate(() => window.Win95WindowManager.closeWindow(document.querySelector("[data-window-app='audio-player']"), { force: true }));
-    assert(await page.locator(".tray-media").isHidden(), "mini-lecteur retiré à la fermeture");
+    equal(await page.locator("[data-window-app='audio-player']").count(), 0, "fenêtre fermée");
+    assert(await page.locator(".tray-media").isVisible(), "mini-lecteur conservé à la fermeture");
+    assert(await page.locator("[data-tm='close']").isVisible(), "bouton d'arrêt visible sans fenêtre");
+    assert(await page.evaluate(() => [...document.querySelectorAll(".tray-media")].length === 1), "un seul mini-lecteur");
+    const playing = () => page.evaluate(() => { const player = document.querySelector("[data-window-app='audio-player']")?.__win95MediaPlayerInstance; return player ? !player.audio.paused : null; });
+    await page.locator("[data-tm='toggle']").click();
+    await page.waitForTimeout(200);
+    await page.locator("[data-tm='toggle']").click();
+    await page.waitForTimeout(300);
+    // Un clic sur le titre rouvre la fenêtre, qui reprend le même lecteur (même piste, toujours en lecture).
+    await page.locator("[data-tm-title]").click();
+    await page.waitForSelector("[data-window-app='audio-player'] .mp-row");
+    equal(await page.locator("[data-mp-title]").textContent(), "Un", "la fenêtre rouverte reprend la piste");
+    equal(await playing(), true, "toujours en lecture après réouverture");
+    equal(await page.locator("[data-tm='close']").isHidden(), true, "bouton d'arrêt masqué avec fenêtre");
+    // Fermer puis arrêter depuis la barre des tâches.
+    await page.evaluate(() => window.Win95WindowManager.closeWindow(document.querySelector("[data-window-app='audio-player']"), { force: true }));
+    await page.locator("[data-tm='close']").click();
+    assert(await page.locator(".tray-media").isHidden(), "mini-lecteur retiré après l'arrêt");
+});
+
+// La diffusion de l'administrateur arrive par un canal Supabase Realtime ; ici on injecte le message reçu (sans réseau YouTube).
+test("lecteur multimédia : diffusion reçue, playlist, arrière-plan", { allowErrors: true }, async (page) => {
+    await open(page);
+    await createAdmin(page);
+    await page.route(/youtube\.com|ytimg\.com/, (route) => route.abort());
+    equal(await page.evaluate(() => ["https://music.youtube.com/playlist?list=PLlHyZGers-cIiy6cdeelpYz505rv0jHJB&si=x", "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ", "https://youtu.be/dQw4w9WgXcQ", "https://exemple.com/playlist?list=PLlHyZGers-cIiy6cdeelpYz505rv0jHJB"].map((l) => window.Win95MediaPlayer.parseYouTubePlaylistId(l))), ["PLlHyZGers-cIiy6cdeelpYz505rv0jHJB", "RDdQw4w9WgXcQ", null, null], "analyse des liens de playlist");
+    const ids = ["dQw4w9WgXcQ", "ns4SkcbLuWU", "TNayC0XY3NE"];
+    // Messages invalides ignorés.
+    await page.evaluate((list) => ["x", { type: "state", ids: ["pas-un-id"], index: 0 }, { type: "state", ids: list, index: 9 }].forEach((m) => window.Win95MediaPlayer.receiveBroadcast(m)), ids);
+    assert(await page.locator(".tray-media").isHidden(), "messages invalides ignorés");
+    await page.evaluate((list) => window.Win95MediaPlayer.receiveBroadcast({ type: "state", ids: list, titles: { ns4SkcbLuWU: { title: "Deux", author: "Moi" } }, index: 1, playing: false, position: 12 }), ids);
+    equal(await page.locator("[data-window-app='audio-player']").count(), 0, "aucune fenêtre ouverte par la diffusion");
+    equal(await page.locator(".tray-media-title").getAttribute("data-text"), "Moi - Deux", "titre diffusé dans la barre des tâches");
+    assert(await page.locator("[data-tm='close']").isVisible(), "lecteur sans fenêtre");
+    // Réglage « suivre la diffusion » désactivé : message ignoré.
+    await page.locator("[data-tm='close']").click();
+    await page.evaluate(() => window.Win95Utils.writeStoredJson(`win95.mediaPlayer.v1.${window.Win95Utils.getCurrentUserId()}`, { follow: false }));
+    await page.evaluate((list) => window.Win95MediaPlayer.receiveBroadcast({ type: "state", ids: list, index: 0, playing: false, position: 0 }), ids);
+    assert(await page.locator(".tray-media").isHidden(), "diffusion ignorée si l'utilisateur ne la suit pas");
+    await page.evaluate(() => window.Win95Utils.writeStoredJson(`win95.mediaPlayer.v1.${window.Win95Utils.getCurrentUserId()}`, {}));
+    // « stop » de l'administrateur : le lecteur reçu disparaît.
+    await page.evaluate((list) => window.Win95MediaPlayer.receiveBroadcast({ type: "state", ids: list, index: 0, playing: false, position: 0 }), ids);
+    assert(await page.locator(".tray-media").isVisible(), "diffusion suivie");
+    await page.evaluate(() => window.Win95MediaPlayer.receiveBroadcast({ type: "stop" }));
+    assert(await page.locator(".tray-media").isHidden(), "fin de diffusion");
 });
 
 // --- 8. Ambiance, clic droit -------------------------------------------------------------------------------------

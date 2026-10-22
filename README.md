@@ -31,7 +31,7 @@ npm install && npm test        # tests (navigateur piloté, Supabase et Drive si
 | Jeux | `scripts/games/` | **Démineur** (3 niveaux + personnalisé, marques, accord, meilleurs temps), **Solitaire** (Klondike, tirage par 1 ou 3, annuler, score, cascade de victoire), **FreeCell** (donnes numérotées de Microsoft, ex. n° 1, suites limitées par les cellules libres, annuler), **Cœurs** (contre 3 joueurs automatiques, passage de cartes, dame de pique, « tout prendre »). |
 | Paint | `scripts/paint/` | Dessin, enregistrement en `.paint` dans Mes documents. |
 | Lecteur d'image | `scripts/image-viewer/` | Parcourt les images d'un dossier. |
-| Lecteur multimédia | `scripts/media-player/` | Lecteur audio (playlist du dossier). |
+| Lecteur multimédia | `scripts/media-player/` | Lecteur audio (playlist du dossier), liens et playlists YouTube / YouTube Music (100 titres), mini-lecteur dans la barre des tâches (la musique continue fenêtre fermée), diffusion synchronisée par l'administrateur (Supabase Realtime). |
 | Panneau de configuration | `scripts/control-panel/` | Date/Heure, Souris, Sons, Système, Ajout/Suppression de programmes, et Affichage (6 fonds d'écran, `scripts/display-properties/`). Voir ci-dessous. |
 | Comptes et session | `scripts/security/`, `scripts/services/accounts-store.js` | Écran d'ouverture de session, premier démarrage (création de l'administrateur), droits par application. |
 | Gestion des utilisateurs (admin) | `scripts/user-manager/` | Créer, modifier, supprimer des comptes, changer leur mot de passe, choisir leurs applications. |
