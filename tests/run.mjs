@@ -481,6 +481,116 @@ test("chargeur : exclusion de modules et de fichiers", async (page) => {
     equal([r.refused, r.allowed, r.menu, r.listed], [false, true, false, false], "applications exclues : refusées et masquées");
 });
 
+test("vue graphique : nœuds, flèches, badges, clic, mise à jour, options persistantes", async (page) => {
+    await open(page);
+    await createAdmin(page);
+    const r = await page.evaluate(async () => {
+        const out = {};
+        const host = document.createElement("div");
+        host.style.cssText = "position:fixed;left:20px;top:20px;width:500px;height:400px;z-index:5";
+        document.body.appendChild(host);
+        const clicked = [];
+        const color = (value) => (value < 0 ? "#ff0000" : value > 0 ? "#008000" : "#808080");
+        const graph = window.Win95GraphView.create(host, { onSelect: (key) => clicked.push(key), colorOf: color, values: [-1, 0, 1], ariaLabel: "Essai" });
+        const nodes = [
+            { key: "a", nom: "Alpha", kind: "pnj", kindLabel: "PNJ", title: "Alpha (test)" },
+            { key: "b", nom: "Bravo", kind: "org", shape: "square", kindLabel: "organisation" },
+            { key: "c", nom: "Charlie", kind: "pnj" }
+        ];
+        const edges = [
+            { key: "e1", from: "a", to: "b", value: 1, label: "+1", tooltip: "Alpha → Bravo" },
+            { key: "e2", from: "b", to: "c", value: -1, label: "−1", tooltip: "Bravo → Charlie" }
+        ];
+        graph.setData({ nodes, edges, selected: "a", radial: true, refit: true });
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        out.container = host.classList.contains("gv-container");
+        out.aria = host.querySelector("svg").getAttribute("aria-label");
+        out.nodes = host.querySelectorAll(".gv-node").length;
+        out.shapes = [host.querySelectorAll(".gv-node circle").length, host.querySelectorAll(".gv-node rect").length];
+        out.square = host.querySelector("[data-key='b']").classList.contains("gv-shape-square") && host.querySelector("[data-key='b']").classList.contains("is-org");
+        out.nodeAria = host.querySelector("[data-key='b']").getAttribute("aria-label");
+        out.edges = host.querySelectorAll(".gv-edge").length;
+        out.markers = host.querySelectorAll("marker").length;
+        out.arrow = host.querySelector(".gv-edge").getAttribute("marker-end");
+        out.badges = [...host.querySelectorAll(".gv-badge")].filter((badge) => badge.style.display !== "none").map((badge) => badge.textContent);
+        out.selected = host.querySelector("[data-key='a']").classList.contains("is-selected");
+        out.selectedFill = getComputedStyle(host.querySelector("[data-key='a'] circle")).fill;
+        out.squareFill = getComputedStyle(host.querySelector("[data-key='b'] rect")).fill;
+        // Clic sur un nœud (sans déplacement) : onSelect reçoit sa clé.
+        const node = host.querySelector("[data-key='c']");
+        node.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, clientX: 10, clientY: 10, pointerId: 1 }));
+        node.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, button: 0, clientX: 10, clientY: 10, pointerId: 1 }));
+        out.clicked = clicked.slice();
+        // Mise à jour : un nœud disparaît, la couleur de groupe passe en variable CSS, le badge suit.
+        graph.recolor([{ key: "a", color: "#0000ff", title: "Groupe" }]);
+        out.fill = host.querySelector("[data-key='a']").style.getPropertyValue("--gv-fill");
+        graph.setData({ nodes: nodes.slice(0, 2), edges: [{ ...edges[0], label: "+2" }], selected: "b", radial: false, refit: false });
+        out.badge = host.querySelector(".gv-badge text").textContent;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        out.after = [host.querySelectorAll(".gv-node").length, host.querySelectorAll(".gv-edge").length];
+        graph.setMessage("Rien à voir");
+        out.message = [host.querySelector(".gv-message").hidden, host.querySelector(".gv-message").textContent, host.querySelector("svg").style.display];
+        graph.setMessage("");
+        graph.destroy();
+
+        // Options : filtres, groupes, curseurs, persistance par compte.
+        const changes = [];
+        const settings = {
+            storageKey: "test.graph", onChange: (options, kind) => changes.push(kind), search: { placeholder: "Chercher" },
+            filters: [{ key: "pnj", label: "PNJ" }, { key: "neutres", label: "Neutres", default: false }],
+            groups: { actions: [{ label: "Un groupe par famille", build: () => [{ query: "alpha" }, { query: "bravo", color: "#ff0000" }] }] }
+        };
+        const options = window.Win95GraphOptions.create(settings);
+        host.appendChild(options.element);
+        options.toggle(true);
+        out.open = options.isOpen();
+        out.defaults = [options.options.pnj, options.options.neutres, options.options.depth, options.options.arrows];
+        const click = (selector) => options.element.querySelector(selector).click();
+        const checks = options.element.querySelectorAll(".gv-check input");
+        checks[0].checked = false;
+        checks[0].dispatchEvent(new Event("change", { bubbles: true }));
+        const slider = options.element.querySelector(".gv-range");
+        slider.value = "2";
+        slider.dispatchEvent(new Event("input", { bubbles: true }));
+        const search = options.element.querySelector(".gv-options-search");
+        search.value = "alp ha";
+        search.dispatchEvent(new Event("input", { bubbles: true }));
+        click("[data-section='groupes'] .gv-group-actions .btn:nth-child(2)");
+        out.changes = changes.slice();
+        out.groups = options.options.groups.map((group) => [group.query, group.color]);
+        out.matchGroup = [options.matchGroup("Alpha le PNJ")?.query, options.matchGroup("Zoulou")];
+        out.matchSearch = [options.matchSearch("Alpha"), options.matchSearch("zoulou")];
+        options.options.search = "alp";
+        out.matchWords = [options.matchSearch("Alpha"), options.matchSearch("Bravo")];
+        // Une deuxième instance relit les réglages enregistrés pour ce compte.
+        const again = window.Win95GraphOptions.create(settings);
+        out.restored = [again.options.pnj, again.options.search, again.options.groups.length, again.options.linkWidth];
+        again.element.querySelector(".gv-options-reset").click();
+        out.reset = [again.options.pnj, again.options.search, again.options.groups.length, changes[changes.length - 1]];
+        // Échap ferme le panneau.
+        options.element.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        out.closed = !options.isOpen();
+        out.storage = Object.keys(localStorage).filter((key) => key.startsWith("test.graph.")).length;
+        return out;
+    });
+    assert(r.container && r.aria === "Essai", "conteneur et libellé");
+    equal([r.nodes, r.shapes, r.square, r.nodeAria], [3, [2, 1], true, "Bravo, organisation"], "nœuds ronds et carrés, classe du genre, libellé accessible");
+    equal([r.edges, r.markers, /^url\(#gv\d+-arrow-2\)$/.test(r.arrow)], [2, 3, true], "flèches et pointes par valeur");
+    equal(r.badges, ["+1"], "seule la flèche du sujet porte un badge");
+    assert(r.selected, "sujet marqué");
+    equal([r.selectedFill, r.squareFill], ["rgb(0, 0, 128)", "rgb(192, 192, 192)"], "sujet bleu marine, carré gris");
+    equal(r.clicked, ["c"], "clic sur un nœud");
+    equal([r.fill, r.badge, r.after], ["#0000ff", "+2", [2, 1]], "recoloration, badge mis à jour, nœud et flèche retirés");
+    equal(r.message, [false, "Rien à voir", "none"], "message à la place du graphe");
+    equal([r.open, r.defaults], [true, [true, false, 3, true]], "options : ouverture et valeurs par défaut");
+    equal(r.changes, ["data", "view", "data", "groups"], "options : nature des changements");
+    equal(r.groups, [["alpha", "#0000ff"], ["bravo", "#ff0000"]], "groupes construits par le projet");
+    equal([r.matchGroup, r.matchSearch, r.matchWords], [["alpha", null], [true, false], [true, false]], "recherche et groupes par mots");
+    equal(r.restored, [false, "alp ha", 2, 2], "réglages relus pour le compte");
+    equal(r.reset, [true, "", 0, "data"], "rétablir les réglages par défaut");
+    equal([r.closed, r.storage], [true, 1], "Échap ferme ; une clé par compte");
+});
+
 // --- 7. Applications --------------------------------------------------------------------------------------------
 
 test("toutes les applications s'ouvrent et se ferment sans erreur", async (page) => {

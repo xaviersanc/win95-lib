@@ -20,7 +20,7 @@
     //   Les plugins y sont ignorés, sauf ceux déclarés `phone: true` (leur contenu s'accroche à Win95LocalLink.registerPhonePage) ;
     // Cette liste est LA référence de l'ordre de chargement : toute nouvelle application s'y ajoute (une seule fois).
 
-    const LIB_VERSION = "1.3.0";
+    const LIB_VERSION = "1.4.0";
     const SUPABASE_JS = {
         src: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js",
         integrity: "sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"
@@ -64,6 +64,7 @@
         { id: "notepad", apps: ["notepad"], css: ["scripts/notepad/notepad-component.css"], js: ["scripts/notepad/notepad-component.js"] },
         { id: "paint", apps: ["paint"], css: ["scripts/paint/paint-component.css"], js: ["scripts/paint/paint-component.js"] },
         { id: "explorer", css: ["scripts/file-explorer/file-explorer-component.css"], js: ["scripts/file-explorer/file-explorer-component.js"] },
+        { id: "graph", css: ["scripts/graph/graph-view.css"], js: ["scripts/graph/graph-view.js", "scripts/graph/graph-options.js"] },
         {
             id: "control-panel",
             css: ["scripts/display-properties/display-properties-component.css", "scripts/control-panel/control-panel.css"],
