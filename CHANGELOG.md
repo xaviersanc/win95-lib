@@ -2,6 +2,14 @@
 
 Versionnement sémantique : une version **majeure** pour tout changement incompatible de l'API d'extension, de la configuration, des fournisseurs, des clés de stockage, des événements `win95:*` ou de l'ordre de chargement.
 
+## Non publié — Lecteur multimédia : barre des tâches et YouTube
+
+**Ajouts**
+- **Mini-lecteur dans la barre des tâches**, à gauche du compte : titre de la piste (il défile en boucle s'il est trop long), précédent, lecture/pause, suivant. Il suit le lecteur qui joue et disparaît avec la dernière fenêtre fermée.
+- **Fichier > Ouvrir un lien YouTube… (Ctrl+L)** : lien youtube.com, music.youtube.com, youtu.be, /shorts, /embed. Lecture par le lecteur officiel (API IFrame, domaine youtube-nocookie.com), cadre vidéo visible dans la fenêtre. Les publicités éventuelles restent celles de YouTube : la bibliothèque ne les retire pas.
+- `Win95MediaPlayer.parseYouTubeId(lien)`.
+- CSP (`vercel/vercel.json`) : `script-src https://www.youtube.com` et `frame-src https://www.youtube-nocookie.com https://www.youtube.com`. Un projet avec sa propre CSP doit les ajouter.
+
 ## 1.4.1 — Double-clic et glisser-déposer de l'explorateur
 
 Version corrective : aucun contrat ne change.

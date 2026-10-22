@@ -646,6 +646,18 @@ test("lecteur multimédia : ouverture, lecture, pause, pistes", async (page) => 
     await player.locator("[data-mp-action='next']").click();
     await page.waitForTimeout(300);
     equal(await player.locator("[data-mp-title]").textContent(), "Deux", "piste suivante");
+    // Mini-lecteur de la barre des tâches, à gauche du compte.
+    equal(await page.locator(".tray-media-title").getAttribute("data-text"), "Artiste - Deux", "titre dans la barre des tâches");
+    await page.locator("[data-tm='prev']").click();
+    await page.waitForTimeout(300);
+    equal(await player.locator("[data-mp-title]").textContent(), "Un", "précédent depuis la barre des tâches");
+    await page.locator("[data-tm='toggle']").click();
+    await page.waitForTimeout(300);
+    assert((await player.locator("[data-mp-status]").textContent()).startsWith("Lecture"), "lecture depuis la barre des tâches");
+    // Liens YouTube : tous les formats reconnus, les autres refusés.
+    equal(await page.evaluate(() => ["https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=x", "https://music.youtube.com/watch?v=dQw4w9WgXcQ", "https://youtu.be/dQw4w9WgXcQ?t=3", "youtube.com/shorts/dQw4w9WgXcQ", "https://exemple.com/watch?v=dQw4w9WgXcQ", "n'importe quoi"].map((l) => window.Win95MediaPlayer.parseYouTubeId(l))), ["dQw4w9WgXcQ", "dQw4w9WgXcQ", "dQw4w9WgXcQ", "dQw4w9WgXcQ", null, null], "analyse des liens YouTube");
+    await page.evaluate(() => window.Win95WindowManager.closeWindow(document.querySelector("[data-window-app='audio-player']"), { force: true }));
+    assert(await page.locator(".tray-media").isHidden(), "mini-lecteur retiré à la fermeture");
 });
 
 // --- 8. Ambiance, clic droit -------------------------------------------------------------------------------------
