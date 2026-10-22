@@ -2,6 +2,17 @@
 
 Versionnement sémantique : une version **majeure** pour tout changement incompatible de l'API d'extension, de la configuration, des fournisseurs, des clés de stockage, des événements `win95:*` ou de l'ordre de chargement.
 
+## 1.4.0 — Vue graphique (graphe de relations) centralisée
+
+Version mineure : un module `graph` s'ajoute à `MODULES` (avant `control-panel`) ; rien d'existant ne change de contrat. Un projet qui n'en veut pas ajoute `"graph"` à `Win95Config.exclude`.
+
+**Ajouts**
+- **`Win95GraphView`** (`scripts/graph/graph-view.js`, `graph-view.css`) : graphe animé façon Obsidian, repris du projet Mecha et généralisé. Nœuds ronds ou carrés (`shape`), classe `is-<kind>` pour le style du projet, flèches colorées par `colorOf(valeur)` avec badge de texte libre (`label`), vue locale en anneaux ou vue générale, mise en clair par degré, zoom/déplacement/glisser de nœuds, recentrage, `setMessage`, `recolor`. `create(container, { onSelect, colorOf, values, ariaLabel })`, `setData({ nodes, edges, selected, radial, refit })`, `setOptions`.
+- **`Win95GraphOptions`** (`scripts/graph/graph-options.js`) : panneau d'options flottant (Filtres, Groupes de couleur, Affichage, Forces, Graphe local), réglages gardés par compte (`<storageKey>.<id>`). Ce qui est propre au projet se déclare : `search`, `filters: [{ key, label, default }]`, `groups: { placeholder, note, actions: [{ label, build }] }`, `local`. `matchSearch(texte)` et `matchGroup(texte)` servent au projet pour filtrer et colorer.
+- Classes CSS `gv-*` (documentées dans `charte-graphique.md` §4). Test : nœuds, flèches, badges, clic, mise à jour, options persistantes.
+
+**Migration (projet Mecha)** : `Win95RelationsGraph` et `Win95RelationsOptions` disparaissent au profit de ces deux composants ; les nœuds portent `kind`/`shape` au lieu de `type`, les flèches `value`/`label` au lieu de `valeur`, et les classes `rl-*` du graphe deviennent `gv-*`.
+
 ## 1.3.0 — Cadre de réglages (Panneau de configuration extensible)
 
 Version mineure : rien d'existant ne change de contrat. Nouveaux événements `win95:window-manager-ready`, `win95:control-panel-applets-changed` et `win95:settings-changed`.

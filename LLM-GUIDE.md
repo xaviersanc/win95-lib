@@ -70,6 +70,7 @@ scripts/accessories/              calculator, clock (Win95ClockApp), charmap
 scripts/local-link/               Connexion locale : qr-code.js (Win95QR), local-link-service.js (Win95LocalLink), local-link-component.js (fenêtre PC), local-link-phone.js (page du téléphone)
 scripts/games/                    cards.js (Win95Cards : paquet, sprites, cascade), minesweeper, solitaire, freecell, hearts — chacun expose Engine (règles sans interface) + attach
 scripts/ambiance/                 boot-screen (démarrage), screensaver + screensaver-effects (écrans de veille), blue-screen, close-program (Ctrl+Alt+Suppr)
+scripts/graph/                     graph-view.js (Win95GraphView : graphe animé de relations), graph-options.js (Win95GraphOptions : panneau d'options), graph-view.css ; génériques, sans rien de propre à un projet
 scripts/control-panel/             Panneau de configuration + applets (date-time, mouse, sounds, system, add-remove) + property-sheet.js (onglets OK/Annuler/Appliquer) + property-fields.js (champs déclaratifs)
 scripts/security/                  Win95Security : session + écran de connexion/premier démarrage
 ```
@@ -120,7 +121,7 @@ Chaque composant = `scripts/<nom>/<nom>-component.js` + `.css`, exposé sur `win
 Une page n'inclut que `scripts/loader.js` (après une configuration facultative). **La liste ordonnée des scripts et feuilles de style vit uniquement dans `MODULES` de `loader.js`** :
 toute nouvelle application ou tout nouveau service s'y ajoute (une seule fois, au bon rang) ; `index.html` n'a jamais à être modifié pour cela. Ordre actuel, par identifiant de module :
 `boot` → `core` (context-guard, tray-clock, zoom-guard, **win95-config**, registre, utils, drag-drop) → `storage` → `services` (accounts, clock, sound, mouse, programs, recycle-bin, wallpaper,
-document-shortcuts, context-menu, menu-bar, dialog, rich-text, user-files) → `media-player` → `image-viewer` → `notepad` → `paint` → `explorer` → `control-panel` (property-sheet) →
+document-shortcuts, context-menu, menu-bar, dialog, rich-text, user-files) → `media-player` → `image-viewer` → `notepad` → `paint` → `explorer` → `graph` → `control-panel` (property-sheet) →
 `accessories` → `games` → `ambiance` → `control-panel-applets` → `local-link` → `user-manager` → `security` → **`window-manager`** (+ window-component). Puis les plugins du projet.
 
 Règles : configuration et registre avant tout ; un service avant les composants qui le lisent **à leur chargement** (l'explorateur et le gestionnaire de fenêtres lisent `Win95UserFiles`,

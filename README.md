@@ -133,6 +133,7 @@ Registre global : `window.Win95Services` (`register(nom, instance)`, `get(nom)`)
 - `Win95ContextMenu` : menu clic droit (`open(x, y, items)`), sous-menus compris.
 - `Win95RichText` : rendu markdown et éditeur façon WordPad.
 - `Win95DragDrop` : types MIME communs des glisser-déposer.
+- `Win95GraphView` / `Win95GraphOptions` (`scripts/graph/`) : vue graphique animée façon Obsidian (nœuds, flèches colorées, badges, vue locale ou générale, zoom) et son panneau d'options flottant (filtres, groupes de couleur, affichage, forces, profondeur ; réglages par compte). Génériques : le projet fournit nœuds, relations, couleurs et filtres.
 
 Événements custom : `win95:window-closing` (annulable) et `win95:window-closed` sont émis sur une fenêtre ; les composants y retirent leurs écouteurs globaux.
 
