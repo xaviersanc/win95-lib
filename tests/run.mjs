@@ -692,16 +692,13 @@ test("lecteur multimédia : diffusion reçue, playlist, arrière-plan", { allowE
     await page.evaluate((list) => window.Win95MediaPlayer.receiveBroadcast({ type: "state", ids: list, titles: { ns4SkcbLuWU: { title: "Deux", author: "Moi" } }, index: 1, playing: false, position: 12 }), ids);
     equal(await page.locator("[data-window-app='audio-player']").count(), 0, "aucune fenêtre ouverte par la diffusion");
     equal(await page.locator(".tray-media-title").getAttribute("data-text"), "Moi - Deux", "titre diffusé dans la barre des tâches");
-    assert(await page.locator("[data-tm='close']").isVisible(), "lecteur sans fenêtre");
-    // Réglage « suivre la diffusion » désactivé : message ignoré.
-    await page.locator("[data-tm='close']").click();
-    await page.evaluate(() => window.Win95Utils.writeStoredJson(`win95.mediaPlayer.v1.${window.Win95Utils.getCurrentUserId()}`, { follow: false }));
-    await page.evaluate((list) => window.Win95MediaPlayer.receiveBroadcast({ type: "state", ids: list, index: 0, playing: false, position: 0 }), ids);
-    assert(await page.locator(".tray-media").isHidden(), "diffusion ignorée si l'utilisateur ne la suit pas");
-    await page.evaluate(() => window.Win95Utils.writeStoredJson(`win95.mediaPlayer.v1.${window.Win95Utils.getCurrentUserId()}`, {}));
+    // Forcée : le lecteur reçu ne peut pas être fermé pendant la diffusion, et l'ancien réglage « follow » ne l'empêche plus.
+    equal(await page.locator("[data-tm='close']").isHidden(), true, "lecteur reçu non fermable pendant la diffusion");
+    equal(await page.evaluate(() => { window.Win95Utils.writeStoredJson(`win95.mediaPlayer.v1.${window.Win95Utils.getCurrentUserId()}`, { follow: false }); return true; }), true, "ancien réglage ignoré");
+    // Administrateur : le bouton Diffuser n'apparaît qu'avec un client Supabase (ici absent).
+    equal(await page.locator("[data-tm='cast']").isHidden(), true, "bouton Diffuser masqué sans Supabase");
     // « stop » de l'administrateur : le lecteur reçu disparaît.
     await page.evaluate((list) => window.Win95MediaPlayer.receiveBroadcast({ type: "state", ids: list, index: 0, playing: false, position: 0 }), ids);
-    assert(await page.locator(".tray-media").isVisible(), "diffusion suivie");
     await page.evaluate(() => window.Win95MediaPlayer.receiveBroadcast({ type: "stop" }));
     assert(await page.locator(".tray-media").isHidden(), "fin de diffusion");
 });

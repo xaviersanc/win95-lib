@@ -191,11 +191,16 @@ body.win95-desktop .mp-btn.is-active {
     box-shadow: inset 1px 1px 0 #808080;
 }
 
+body.win95-desktop .mp-btn[hidden] {
+    display: none;
+}
+
 body.win95-desktop .mp-volume {
     display: flex;
     align-items: center;
     gap: 4px;
-    width: 120px;
+    flex: 1 1 70px;
+    max-width: 120px;
     margin: 0;
 }
 
