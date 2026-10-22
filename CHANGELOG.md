@@ -2,6 +2,14 @@
 
 Versionnement sémantique : une version **majeure** pour tout changement incompatible de l'API d'extension, de la configuration, des fournisseurs, des clés de stockage, des événements `win95:*` ou de l'ordre de chargement.
 
+## 1.4.1 — Double-clic et glisser-déposer de l'explorateur
+
+Version corrective : aucun contrat ne change.
+
+**Corrections**
+- **Double-clic : un élément s'ouvrait deux fois** (explorateur, Panneau de configuration, Fin de tâche, gestionnaire d'utilisateurs). Chrome envoie le `dblclick` natif au nœud du 2ᵉ clic ; la liste étant redessinée à chaque clic, ce nœud est détaché et le blocage de `Win95Mouse` (sur `window`) ne le voit pas. Ces écouteurs ignorent désormais les `dblclick` natifs (`event.isTrusted`) : seul l'événement recomposé compte. À reproduire dans tout composant qui redessine sa liste au clic.
+- **Glisser un élément vers un autre explorateur** : un élément de l'explorateur embarquant son icône comme « fichier », celle-ci était importée à sa place. Un glisser interne (`MIME.explorerEntry`) n'importe plus de fichiers ; un explorateur inscriptible (partagé compris) l'accepte et le confie aux `registerDropHandler` du projet.
+
 ## 1.4.0 — Vue graphique (graphe de relations) centralisée
 
 Version mineure : un module `graph` s'ajoute à `MODULES` (avant `control-panel`) ; rien d'existant ne change de contrat. Un projet qui n'en veut pas ajoute `"graph"` à `Win95Config.exclude`.

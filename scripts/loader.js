@@ -20,7 +20,7 @@
     //   Les plugins y sont ignorés, sauf ceux déclarés `phone: true` (leur contenu s'accroche à Win95LocalLink.registerPhonePage) ;
     // Cette liste est LA référence de l'ordre de chargement : toute nouvelle application s'y ajoute (une seule fois).
 
-    const LIB_VERSION = "1.4.0";
+    const LIB_VERSION = "1.4.1";
     const SUPABASE_JS = {
         src: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js",
         integrity: "sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"

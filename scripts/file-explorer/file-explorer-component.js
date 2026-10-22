@@ -743,7 +743,8 @@
                     this.statusElement.textContent = `${entry.name} sélectionné`;
                 });
 
-                itemButton.addEventListener("dblclick", () => this.activateEntry(entry));
+                // Le dblclick natif part vers un nœud déjà redessiné (détaché) : seul le dblclick recomposé de Win95Mouse compte.
+                itemButton.addEventListener("dblclick", (event) => !event.isTrusted && this.activateEntry(entry));
 
                 grid.appendChild(itemButton);
             });
@@ -966,7 +967,8 @@
             }
 
             event.preventDefault();
-            if (event.dataTransfer.files?.length > 0) {
+            // Un élément de l'explorateur glissé embarque parfois son icône comme « fichier » : seul le contenu glissé compte.
+            if (event.dataTransfer.files?.length > 0 && !dragDrop.hasAnyType(event.dataTransfer, [MIME.explorerEntry])) {
                 void this.uploadFiles(event.dataTransfer.files);
                 return;
             }
@@ -1013,7 +1015,7 @@
         canAcceptListDrop(dataTransfer) {
             return dragDrop.hasAnyType(dataTransfer, [MIME.recycleBinEntry])
                 || (this.canWrite() && dragDrop.hasAnyType(dataTransfer, ["Files"]))
-                || (this.canHostShortcuts() && dragDrop.hasAnyType(dataTransfer, [MIME.explorerEntry]));
+                || (this.canWrite() && dragDrop.hasAnyType(dataTransfer, [MIME.explorerEntry]));
         }
 
         toggleListDropState(isActive) {
