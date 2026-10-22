@@ -4,6 +4,8 @@
     //  - boutons Précédent, Lecture, Pause, Arrêt, Suivant, Éjecter (ouvrir des fichiers), curseur de position gradué, volume ;
     //  - liste de lecture (piste, titre, durée), lecture aléatoire, répétition de la liste ou de la piste ;
     //  - Fichier > Ouvrir… ou glisser des fichiers audio sur la fenêtre ; ouverture depuis Mes documents par Win95UserFiles.openFile ;
+    //  - Fichier > Ouvrir un lien YouTube… : vidéo YouTube / YouTube Music via le lecteur officiel (API IFrame) ;
+    //  - mini-lecteur dans la barre des tâches (titre défilant, précédent, lecture/pause, suivant) ;
     //  - réglages par compte : localStorage "win95.mediaPlayer.v1.<id>" = { volume, shuffle, repeat, showList }.
     // API : Win95MediaPlayer.attach(fenêtre) et Win95MediaPlayer.openFolderTracks({ tracks, startIndex }, { forceNewWindow }).
 
@@ -32,6 +34,202 @@
         const name = fileName.replace(/\.[^/.]+$/, "");
         const parts = name.split(" - ");
         return parts.length > 1 ? { artist: parts[0].trim(), title: parts.slice(1).join(" - ").trim() } : { artist: "", title: name };
+    }
+
+    // --- YouTube / YouTube Music : lecteur officiel (API IFrame) caché derrière la même interface que <audio> -----------
+
+    // Identifiant d'une vidéo depuis un lien youtube.com, music.youtube.com, youtu.be, /shorts, /embed ou /live (sinon null).
+    function parseYouTubeId(text) {
+        const value = String(text || "").trim();
+        let url;
+        try {
+            url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+        } catch {
+            return null;
+        }
+        const host = url.hostname.replace(/^(www\.|m\.|music\.)/, "");
+        let id = null;
+        if (host === "youtu.be") {
+            id = url.pathname.slice(1).split("/")[0];
+        } else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+            id = url.searchParams.get("v") || (url.pathname.match(/^\/(?:embed|shorts|live|v)\/([\w-]{11})/) || [])[1];
+        }
+        return /^[\w-]{11}$/.test(id || "") ? id : null;
+    }
+
+    let youtubeApi = null;
+    function loadYouTubeApi() {
+        if (window.YT?.Player) {
+            return Promise.resolve(window.YT);
+        }
+        youtubeApi ||= new Promise((resolve, reject) => {
+            const previous = window.onYouTubeIframeAPIReady;
+            window.onYouTubeIframeAPIReady = () => {
+                previous?.();
+                resolve(window.YT);
+            };
+            const script = document.createElement("script");
+            script.src = "https://www.youtube.com/iframe_api";
+            script.onerror = () => {
+                youtubeApi = null;
+                reject(new Error("YouTube inaccessible"));
+            };
+            document.head.appendChild(script);
+        });
+        return youtubeApi;
+    }
+
+    // Reprend la partie de HTMLAudioElement utilisée par le lecteur (paused, ended, currentTime, duration, volume, play, pause,
+    // src/load, événements play, pause, ended, timeupdate, durationchange, loadedmetadata, error) ; "metadata" porte titre et chaîne.
+    class YouTubeEngine extends EventTarget {
+        constructor(host) {
+            super();
+            this.host = host;
+            this.player = null;
+            this.ready = null;
+            this.src = null;
+            this.videoId = null;
+            this.state = -1;
+            this.wantPlay = false;
+            this.timer = null;
+            this.volumeValue = 0.8;
+        }
+
+        emit(type, detail) {
+            this.dispatchEvent(new CustomEvent(type, { detail }));
+        }
+
+        get paused() {
+            return !(this.state === 1 || (this.state === 3 && this.wantPlay));
+        }
+
+        get ended() {
+            return this.state === 0;
+        }
+
+        get duration() {
+            return this.videoId && this.player?.getDuration ? this.player.getDuration() || NaN : NaN;
+        }
+
+        get currentTime() {
+            return this.videoId && this.player?.getCurrentTime ? this.player.getCurrentTime() || 0 : 0;
+        }
+
+        set currentTime(value) {
+            if ([1, 2, 3, 0].includes(this.state)) {
+                this.player?.seekTo?.(value, true);
+            }
+        }
+
+        get volume() {
+            return this.volumeValue;
+        }
+
+        set volume(value) {
+            this.volumeValue = value;
+            this.player?.setVolume?.(Math.round(value * 100));
+        }
+
+        getAttribute(name) {
+            return name === "src" ? this.src : null;
+        }
+
+        removeAttribute() {
+            this.src = null;
+            this.videoId = null;
+            this.state = -1;
+            this.wantPlay = false;
+            this.stopTimer();
+            this.player?.stopVideo?.();
+        }
+
+        load() {
+            this.videoId = String(this.src || "").replace(/^youtube:/, "") || null;
+            this.state = -1;
+            const id = this.videoId;
+            this.ensure().then(() => {
+                if (id && id === this.videoId) {
+                    this.player.cueVideoById(id);
+                }
+            }).catch(() => this.emit("error"));
+        }
+
+        ensure() {
+            this.ready ||= loadYouTubeApi().then((YT) => new Promise((resolve) => {
+                const mount = document.createElement("div");
+                this.host.appendChild(mount);
+                this.player = new YT.Player(mount, {
+                    width: "100%",
+                    height: "100%",
+                    host: "https://www.youtube-nocookie.com",
+                    playerVars: { playsinline: 1, controls: 0, disablekb: 1, rel: 0, modestbranding: 1, origin: window.location.origin },
+                    events: {
+                        onReady: () => {
+                            this.player.setVolume(Math.round(this.volumeValue * 100));
+                            resolve();
+                        },
+                        onStateChange: (event) => this.onState(event.data),
+                        onError: () => this.emit("error")
+                    }
+                });
+            })).catch((error) => {
+                this.ready = null;
+                throw error;
+            });
+            return this.ready;
+        }
+
+        play() {
+            this.wantPlay = true;
+            return this.ensure().then(() => this.videoId && this.player.playVideo());
+        }
+
+        pause() {
+            this.wantPlay = false;
+            this.player?.pauseVideo?.();
+        }
+
+        onState(state) {
+            this.state = state;
+            if (state === 1) {
+                this.startTimer();
+                this.readMetaData();
+                this.emit("durationchange");
+                this.emit("play");
+            } else if (state === 2 || state === 0) {
+                this.stopTimer();
+                this.emit("pause");
+                if (state === 0) {
+                    this.emit("ended");
+                }
+            } else if (state === 5) {
+                this.readMetaData();
+                this.emit("loadedmetadata");
+            }
+        }
+
+        readMetaData() {
+            const data = this.player?.getVideoData?.();
+            if (data?.title) {
+                this.emit("metadata", { videoId: this.videoId, title: data.title, author: data.author || "" });
+            }
+        }
+
+        startTimer() {
+            this.stopTimer();
+            this.timer = setInterval(() => this.emit("timeupdate"), 500);
+        }
+
+        stopTimer() {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+
+        destroy() {
+            this.stopTimer();
+            this.player?.destroy?.();
+            this.player = null;
+        }
     }
 
     function toTrack(detail) {
@@ -74,8 +272,19 @@
             this.bindAudio();
             this.bindWindow();
             rootElement.__win95MediaPlayerInstance = this;
+            tray.join(this);
             this.renderList();
             this.sync();
+        }
+
+        // Moteur actif : <audio> pour les fichiers, lecteur YouTube pour les liens YouTube.
+        get audio() {
+            return this.current?.youtube ? this.youtube : this.nativeAudio;
+        }
+
+        setVolume(volume) {
+            this.nativeAudio.volume = volume;
+            this.youtube.volume = volume;
         }
 
         // --- Construction -----------------------------------------------------------------------------------------
@@ -86,6 +295,7 @@
                     label: "Fichier",
                     items: () => [
                         { label: "Ouvrir…", hint: "Ctrl+O", onSelect: () => this.pickFiles() },
+                        { label: "Ouvrir un lien YouTube…", hint: "Ctrl+L", onSelect: () => void this.addYouTube() },
                         { label: "Fermer la liste", disabled: this.tracks.length === 0, onSelect: () => this.clear() },
                         { separator: true },
                         { label: "Quitter", onSelect: () => window.Win95WindowManager?.closeWindow(this.rootElement) }
@@ -114,7 +324,7 @@
                 },
                 {
                     label: "?",
-                    items: [{ label: "À propos du Lecteur multimédia", onSelect: () => void window.Win95Dialog.alert({ title: "À propos du Lecteur multimédia", message: "Lecteur multimédia Windows 95 (simulation).\nOuvrez des fichiers audio (.mp3, .wav, .ogg, .m4a, .flac) avec Fichier > Ouvrir, ou depuis Mes documents." }) }]
+                    items: [{ label: "À propos du Lecteur multimédia", onSelect: () => void window.Win95Dialog.alert({ title: "À propos du Lecteur multimédia", message: "Lecteur multimédia Windows 95 (simulation).\nOuvrez des fichiers audio (.mp3, .wav, .ogg, .m4a, .flac) avec Fichier > Ouvrir, ou depuis Mes documents.\nFichier > Ouvrir un lien YouTube lit une vidéo de YouTube ou de YouTube Music avec le lecteur officiel." }) }]
                 }
             ]);
 
@@ -131,6 +341,7 @@
                         <div class="mp-field"><label>Titre :</label><div class="mp-readout" data-mp-title></div></div>
                     </div>
                 </div>
+                <div class="mp-video" data-mp-video hidden></div>
                 <div class="mp-seek-wrap"><input class="mp-seek" type="range" min="0" max="1000" value="0" data-mp-seek aria-label="Position de lecture"></div>
                 <div class="mp-transport">
                     <div class="mp-buttons">
@@ -151,8 +362,10 @@
                 <audio class="mp-audio" data-mp-audio preload="metadata"></audio>`;
             this.bodyElement.appendChild(player);
             this.playerElement = player;
-            this.audio = player.querySelector("[data-mp-audio]");
+            this.nativeAudio = player.querySelector("[data-mp-audio]");
+            this.youtube = new YouTubeEngine(player.querySelector("[data-mp-video]"));
             this.refs = {
+                video: player.querySelector("[data-mp-video]"),
                 number: player.querySelector("[data-mp-number]"),
                 time: player.querySelector("[data-mp-time]"),
                 artist: player.querySelector("[data-mp-artist]"),
@@ -165,7 +378,7 @@
                 lcd: player.querySelector("[data-mp-lcd]")
             };
             this.refs.volume.value = String(Math.round(this.settings.volume * 100));
-            this.audio.volume = this.settings.volume;
+            this.setVolume(this.settings.volume);
 
             player.addEventListener("click", (event) => {
                 const action = event.target.closest("[data-mp-action]")?.dataset.mpAction;
@@ -183,16 +396,29 @@
                 }
             });
             this.refs.volume.addEventListener("input", () => {
-                this.audio.volume = Number(this.refs.volume.value) / 100;
-                this.update({ volume: this.audio.volume }, { render: false });
+                this.setVolume(Number(this.refs.volume.value) / 100);
+                this.update({ volume: this.nativeAudio.volume }, { render: false });
             });
         }
 
+        // Les événements des deux moteurs sont écoutés ; seuls ceux du moteur actif comptent.
         bindAudio() {
-            ["loadedmetadata", "timeupdate", "play", "pause", "seeked", "durationchange"].forEach((type) => this.audio.addEventListener(type, () => this.sync()));
-            this.audio.addEventListener("ended", () => this.ended());
-            this.audio.addEventListener("error", () => {
-                this.refs.status.textContent = "Fichier audio illisible.";
+            [this.nativeAudio, this.youtube].forEach((engine) => {
+                const active = (handler) => () => engine === this.audio && handler();
+                ["loadedmetadata", "timeupdate", "play", "pause", "seeked", "durationchange"].forEach((type) => engine.addEventListener(type, active(() => this.sync())));
+                engine.addEventListener("ended", active(() => this.ended()));
+                engine.addEventListener("error", active(() => {
+                    this.refs.status.textContent = engine === this.youtube ? "Vidéo YouTube illisible ou non disponible." : "Fichier audio illisible.";
+                    this.sync();
+                }));
+            });
+            this.youtube.addEventListener("metadata", (event) => {
+                const { videoId, title, author } = event.detail;
+                this.tracks.filter((track) => track.youtube === videoId).forEach((track) => {
+                    track.title = title;
+                    track.artist = author;
+                });
+                this.renderList();
                 this.sync();
             });
         }
@@ -204,6 +430,9 @@
                 if (event.ctrlKey && event.key.toLowerCase() === "o") {
                     event.preventDefault();
                     this.pickFiles();
+                } else if (event.ctrlKey && event.key.toLowerCase() === "l") {
+                    event.preventDefault();
+                    void this.addYouTube();
                 } else if (event.key === " " && !event.target.closest("input, button, select")) {
                     event.preventDefault();
                     this.togglePlay();
@@ -225,8 +454,10 @@
             });
             root.addEventListener("win95:window-closed", () => {
                 this.destroyed = true;
-                this.audio.pause();
-                this.audio.removeAttribute("src");
+                tray.leave(this);
+                this.nativeAudio.pause();
+                this.nativeAudio.removeAttribute("src");
+                this.youtube.destroy();
                 this.tracks.filter((track) => track.owned).forEach((track) => URL.revokeObjectURL(track.url));
             }, { once: true });
         }
@@ -260,8 +491,10 @@
         }
 
         clear() {
-            this.audio.pause();
-            this.audio.removeAttribute("src");
+            [this.nativeAudio, this.youtube].forEach((engine) => {
+                engine.pause();
+                engine.removeAttribute("src");
+            });
             this.setTracks([], 0, { autoplay: false });
         }
 
@@ -282,6 +515,28 @@
                 this.refs.status.textContent = "Aucun fichier audio dans la sélection.";
                 return;
             }
+            this.appendTracks(added);
+        }
+
+        // Fichier > Ouvrir un lien YouTube… : liens youtube.com, music.youtube.com, youtu.be.
+        async addYouTube() {
+            const link = await window.Win95Dialog.prompt({
+                title: "Ouvrir un lien YouTube",
+                message: "Collez le lien d'une vidéo YouTube ou d'un titre YouTube Music :",
+                confirmLabel: "Ouvrir"
+            });
+            if (link === null || link === undefined || this.destroyed) {
+                return;
+            }
+            const id = parseYouTubeId(link);
+            if (!id) {
+                await window.Win95Dialog.error({ title: "Lien YouTube", message: "Ce lien n'est pas un lien YouTube ou YouTube Music valide." });
+                return;
+            }
+            this.appendTracks([{ fileName: `YouTube ${id}`, artist: "YouTube", title: `YouTube (${id})`, url: `youtube:${id}`, youtube: id, owned: false, duration: null }]);
+        }
+
+        appendTracks(added) {
             const first = this.tracks.length;
             this.tracks = [...this.tracks, ...added];
             this.renderList();
@@ -299,7 +554,7 @@
             const probe = new Audio();
             probe.preload = "metadata";
             for (const track of this.tracks) {
-                if (this.destroyed || track.duration !== null) {
+                if (this.destroyed || track.duration !== null || track.youtube) {
                     continue;
                 }
                 track.duration = await new Promise((resolve) => {
@@ -326,6 +581,8 @@
                 this.sync();
                 return;
             }
+            // L'autre moteur se tait (on passe d'un fichier à une vidéo YouTube, ou inversement).
+            (track.youtube ? this.nativeAudio : this.youtube).pause();
             if (this.audio.getAttribute("src") !== track.url) {
                 this.audio.src = track.url;
                 this.audio.load();
@@ -511,8 +768,103 @@
             }
             this.refs.listWrap.hidden = !this.settings.showList;
             this.refs.list.querySelectorAll(".mp-row").forEach((row, index) => row.classList.toggle("is-current", index === this.index));
+            // Le cadre vidéo n'apparaît que pour une piste YouTube : la fenêtre se réajuste quand il change.
+            const showVideo = Boolean(track?.youtube);
+            if (this.refs.video.hidden === showVideo) {
+                this.refs.video.hidden = !showVideo;
+                this.fit();
+            }
+            tray.refresh(this, playing);
         }
     }
+
+    // Mini-lecteur de la barre des tâches, à gauche du compte : titre défilant s'il est trop long, précédent, lecture/pause, suivant.
+    // Il suit le lecteur qui joue (ou le dernier ouvert) et disparaît avec le dernier lecteur fermé ou sans piste.
+    const tray = {
+        players: new Set(),
+        owner: null,
+        element: null,
+
+        join(player) {
+            this.players.add(player);
+            this.owner ||= player;
+        },
+
+        leave(player) {
+            this.players.delete(player);
+            if (this.owner === player) {
+                this.owner = [...this.players][0] || null;
+                this.refresh(this.owner, !this.owner?.audio.paused);
+            }
+        },
+
+        build() {
+            const anchor = document.querySelector("[data-user-tray]") || document.querySelector(".tray-clock");
+            if (!anchor) {
+                return null;
+            }
+            const element = document.createElement("div");
+            element.className = "tray-media";
+            element.hidden = true;
+            element.setAttribute("role", "group");
+            element.setAttribute("aria-label", "Lecteur multimédia");
+            element.innerHTML = `
+                <div class="tray-media-title" data-tm-title><span></span></div>
+                <button type="button" class="tray-media-btn" data-tm="prev" title="Piste précédente" aria-label="Piste précédente">${ICONS.prev}</button>
+                <button type="button" class="tray-media-btn" data-tm="toggle" title="Lecture" aria-label="Lecture">${ICONS.play}</button>
+                <button type="button" class="tray-media-btn" data-tm="next" title="Piste suivante" aria-label="Piste suivante">${ICONS.next}</button>`;
+            anchor.parentElement.insertBefore(element, anchor);
+            element.addEventListener("click", (event) => {
+                const action = event.target.closest("[data-tm]")?.dataset.tm;
+                const player = this.owner;
+                if (!action || !player) {
+                    return;
+                }
+                ({ prev: () => player.previous(), next: () => player.next(), toggle: () => player.togglePlay() })[action]?.();
+            });
+            this.element = element;
+            return element;
+        },
+
+        refresh(player, playing) {
+            if (player && player.audio && !player.audio.paused && this.owner !== player) {
+                this.owner = player;      // le lecteur qui se met à jouer prend la main
+            }
+            if (player !== this.owner) {
+                return;
+            }
+            const element = this.element || this.build();
+            if (!element) {
+                return;
+            }
+            const track = player?.current;
+            element.hidden = !track;
+            if (!track) {
+                return;
+            }
+            const text = track.artist && track.artist !== "YouTube" ? `${track.artist} - ${track.title}` : track.title;
+            const titleBox = element.querySelector("[data-tm-title]");
+            if (titleBox.dataset.text !== text) {
+                titleBox.dataset.text = text;
+                titleBox.title = text;
+                const span = titleBox.firstElementChild;
+                titleBox.classList.remove("is-scrolling");
+                span.textContent = text;
+                // Trop long : le texte est répété et défile en boucle (vitesse constante, environ 6 caractères par seconde).
+                if (span.scrollWidth > titleBox.clientWidth) {
+                    span.textContent = `${text}      ${text}      `;
+                    span.style.animationDuration = `${Math.max(6, (text.length + 6) / 6)}s`;
+                    titleBox.classList.add("is-scrolling");
+                }
+            }
+            const toggle = element.querySelector("[data-tm='toggle']");
+            toggle.innerHTML = playing ? ICONS.pause : ICONS.play;
+            toggle.title = toggle.ariaLabel = playing ? "Pause" : "Lecture";
+            element.querySelectorAll("[data-tm='prev'], [data-tm='next']").forEach((button) => {
+                button.disabled = player.tracks.length < 2;
+            });
+        }
+    };
 
     const service = {
         attach(rootElement) {
@@ -540,6 +892,7 @@
         }
     };
 
+    service.parseYouTubeId = parseYouTubeId;
     window.Win95MediaPlayer = service;
     window.Win95Services?.register?.("Win95MediaPlayer", service);
 })();
