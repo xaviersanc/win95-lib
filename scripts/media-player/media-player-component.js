@@ -18,6 +18,7 @@
         stop: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2h8v8H2z" fill="currentColor"/></svg>',
         prev: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 1h2v10H1zM11 1v10L4 6z" fill="currentColor"/></svg>',
         next: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M9 1h2v10H9zM1 1v10l7-5z" fill="currentColor"/></svg>',
+        cast: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM6 11V7.5M3.6 3.6a3.4 3.4 0 0 0 0 4.8M8.4 3.6a3.4 3.4 0 0 1 0 4.8M1.7 1.7a6 6 0 0 0 0 8.6M10.3 1.7a6 6 0 0 1 0 8.6" fill="none" stroke="currentColor" stroke-width="1"/></svg>',
         eject: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1l5 6H1zM1 9h10v2H1z" fill="currentColor"/></svg>'
     };
 
@@ -400,8 +401,7 @@
                 volume: Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : 0.8,
                 shuffle: saved.shuffle === true,
                 repeat: ["off", "all", "one"].includes(saved.repeat) ? saved.repeat : "off",
-                showList: saved.showList !== false,
-                follow: saved.follow !== false
+                showList: saved.showList !== false
             };
             this.tracks = [];
             this.index = 0;
@@ -483,7 +483,6 @@
                         { separator: true },
                         ...(diffusion.available() ? [
                             ...(diffusion.isAdmin() ? [{ label: "Diffuser à tous les utilisateurs", checked: diffusion.caster === this, disabled: diffusion.caster !== this && !this.current?.youtube, onSelect: () => diffusion.toggle(this) }] : []),
-                            { label: "Suivre la diffusion de l'administrateur", checked: this.settings.follow, onSelect: () => this.update({ follow: !this.settings.follow }, { render: false }) },
                             { separator: true }
                         ] : []),
                         { label: "Quitter", onSelect: () => window.Win95WindowManager?.closeWindow(this.rootElement) }
@@ -539,6 +538,7 @@
                         <button type="button" class="btn mp-btn" data-mp-action="stop" title="Arrêt" aria-label="Arrêt">${ICONS.stop}</button>
                         <button type="button" class="btn mp-btn" data-mp-action="next" title="Piste suivante" aria-label="Piste suivante">${ICONS.next}</button>
                         <button type="button" class="btn mp-btn" data-mp-action="eject" title="Ouvrir des fichiers…" aria-label="Ouvrir des fichiers">${ICONS.eject}</button>
+                        <button type="button" class="btn mp-btn" data-mp-action="cast" title="Diffuser à tous les utilisateurs" aria-label="Diffuser à tous les utilisateurs" hidden>${ICONS.cast}</button>
                     </div>
                     <label class="mp-volume"><img alt="" src="${window.Win95Asset("assets/icons/loudspeaker_rays-0.png")}"><input type="range" min="0" max="100" data-mp-volume aria-label="Volume"></label>
                 </div>
@@ -879,7 +879,8 @@
                 stop: () => this.stop(),
                 prev: () => this.previous(),
                 next: () => this.next(),
-                eject: () => this.pickFiles()
+                eject: () => this.pickFiles(),
+                cast: () => diffusion.toggle(this)
             })[name]?.();
         }
 
@@ -1030,6 +1031,7 @@
             this.playerElement.querySelectorAll("[data-mp-action='prev'], [data-mp-action='next']").forEach((button) => {
                 button.disabled = this.tracks.length < 2;
             });
+            diffusion.decorate(this.playerElement.querySelector("[data-mp-action='cast']"), this);
             const state = !track ? "Arrêté" : playing ? "Lecture" : position > 0 && !audio.ended ? "En pause" : "Arrêté";
             const mode = [this.settings.shuffle ? "aléatoire" : "", this.settings.repeat === "all" ? "répétition de la liste" : this.settings.repeat === "one" ? "répétition de la piste" : ""].filter(Boolean).join(", ");
             if (!refs.status.dataset.sticky || state !== "Arrêté") {
@@ -1087,6 +1089,7 @@
                 <button type="button" class="tray-media-btn" data-tm="prev" title="Piste précédente" aria-label="Piste précédente">${ICONS.prev}</button>
                 <button type="button" class="tray-media-btn" data-tm="toggle" title="Lecture" aria-label="Lecture">${ICONS.play}</button>
                 <button type="button" class="tray-media-btn" data-tm="next" title="Piste suivante" aria-label="Piste suivante">${ICONS.next}</button>
+                <button type="button" class="tray-media-btn" data-tm="cast" title="Diffuser à tous les utilisateurs" aria-label="Diffuser à tous les utilisateurs" hidden>${ICONS.cast}</button>
                 <button type="button" class="tray-media-btn" data-tm="close" title="Arrêter et fermer le lecteur" aria-label="Arrêter et fermer le lecteur">${ICONS.stop}</button>`;
             anchor.parentElement.insertBefore(element, anchor);
             element.addEventListener("click", (event) => {
@@ -1102,7 +1105,7 @@
                     }
                     return;
                 }
-                ({ prev: () => player.previous(), next: () => player.next(), toggle: () => player.togglePlay(), close: () => player.destroy() })[action]?.();
+                ({ prev: () => player.previous(), next: () => player.next(), toggle: () => player.togglePlay(), cast: () => diffusion.toggle(player), close: () => player.destroy() })[action]?.();
             });
             this.element = element;
             return element;
@@ -1139,7 +1142,9 @@
                     titleBox.classList.add("is-scrolling");
                 }
             }
-            element.querySelector("[data-tm='close']").hidden = !player.orphaned;
+            // Pendant une diffusion reçue, le lecteur ne peut pas être fermé : l'administrateur décide.
+            element.querySelector("[data-tm='close']").hidden = !player.orphaned || Boolean(player.broadcastSig);
+            diffusion.decorate(element.querySelector("[data-tm='cast']"), player);
             titleBox.style.cursor = player.orphaned ? "pointer" : "default";
             const toggle = element.querySelector("[data-tm='toggle']");
             toggle.innerHTML = playing ? ICONS.pause : ICONS.play;
@@ -1217,6 +1222,7 @@
                 this.caster.sync();
             }
             this.caster = player;
+            tray.owner = player;      // le mini-lecteur affiche (et pilote) la piste diffusée
             this.lastKey = "";
             clearInterval(this.heartbeat);
             this.heartbeat = setInterval(() => this.notify(player, true), 4000);
@@ -1234,6 +1240,21 @@
             this.caster = null;
             this.lastKey = "";
             this.send({ type: "stop" });
+        },
+
+        // Bouton « Diffuser » : visible pour l'administrateur seulement, enfoncé pendant la diffusion, grisé hors piste YouTube.
+        decorate(button, player) {
+            if (!button) {
+                return;
+            }
+            const visible = this.available() && this.isAdmin();
+            button.hidden = !visible;
+            if (visible) {
+                const casting = this.caster === player;
+                button.classList.toggle("is-active", casting);
+                button.disabled = !casting && !player.current?.youtube;
+                button.title = casting ? "Arrêter la diffusion" : button.disabled ? "Seule une piste YouTube peut être diffusée" : "Diffuser à tous les utilisateurs";
+            }
         },
 
         message(player) {
@@ -1273,7 +1294,7 @@
         },
 
         receive(payload) {
-            if (!payload || this.caster || this.readFollow() === false) {
+            if (!payload || this.caster) {
                 return;
             }
             if (payload.type === "stop") {
@@ -1303,11 +1324,6 @@
             const live = [...tray.players].filter((player) => !player.destroyed);
             const player = live.find((candidate) => candidate.broadcastSig) || tray.owner || live[0] || service.createBackground();
             player?.applyBroadcast(message);
-        },
-
-        readFollow() {
-            const saved = utils().readStoredJson(`${STORAGE_PREFIX}.${utils().getCurrentUserId()}`, {}) || {};
-            return saved.follow !== false;
         }
     };
 
