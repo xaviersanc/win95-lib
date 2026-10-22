@@ -109,7 +109,8 @@
                 render();
                 list.querySelector(".selected")?.focus();
             });
-            item.addEventListener("dblclick", () => void endTask(task));
+            // Le dblclick natif part vers un nœud déjà redessiné (détaché) : seul le dblclick recomposé de Win95Mouse compte.
+            item.addEventListener("dblclick", (event) => !event.isTrusted && void endTask(task));
             list.appendChild(item);
         });
         overlay.querySelector("[data-closeprog-end]").disabled = !overlay.dataset.selected;

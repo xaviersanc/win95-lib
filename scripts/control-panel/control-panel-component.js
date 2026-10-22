@@ -82,7 +82,8 @@
                     this.listElement.querySelector(".list-item.selected")?.focus();
                     this.statusElement.textContent = applet.hint;
                 });
-                item.addEventListener("dblclick", () => this.open(applet));
+                // Le dblclick natif part vers un nœud déjà redessiné (détaché) : seul le dblclick recomposé de Win95Mouse compte.
+                item.addEventListener("dblclick", (event) => !event.isTrusted && this.open(applet));
                 item.addEventListener("keydown", (event) => {
                     if (event.key === "Enter") {
                         this.open(applet);

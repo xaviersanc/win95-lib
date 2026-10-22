@@ -591,6 +591,21 @@ test("vue graphique : nœuds, flèches, badges, clic, mise à jour, options pers
     equal([r.closed, r.storage], [true, 1], "Échap ferme ; une clé par compte");
 });
 
+test("explorateur : un double-clic ouvre le fichier une seule fois", async (page) => {
+    await open(page);
+    await createAdmin(page);
+    await page.evaluate(async () => {
+        await window.Win95UserFiles.createTextFile(null, "a.txt", "bonjour");
+        window.Win95WindowManager.openApp("internet-explorer");
+    });
+    const item = page.locator(".list-item[data-name='a.txt']");
+    await item.waitFor();
+    const box = await item.boundingBox();
+    await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
+    await page.waitForTimeout(500);
+    equal(await page.locator("[data-window-app='notepad']").count(), 1, "fenêtres Bloc-notes ouvertes");
+});
+
 // --- 7. Applications --------------------------------------------------------------------------------------------
 
 test("toutes les applications s'ouvrent et se ferment sans erreur", async (page) => {

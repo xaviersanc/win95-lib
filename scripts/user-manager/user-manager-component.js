@@ -117,7 +117,8 @@
                     this.render();
                 };
                 row.addEventListener("click", select);
-                row.addEventListener("dblclick", () => this.startEdit(account.id));
+                // Le dblclick natif part vers un nœud déjà redessiné (détaché) : seul le dblclick recomposé de Win95Mouse compte.
+                row.addEventListener("dblclick", (event) => !event.isTrusted && this.startEdit(account.id));
                 row.addEventListener("keydown", (event) => {
                     if (event.key === "Enter") {
                         this.startEdit(account.id);
