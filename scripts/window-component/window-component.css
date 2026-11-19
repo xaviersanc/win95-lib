@@ -87,7 +87,7 @@ body.win95-desktop .window-resize-bottom-right {
 
 body.win95-desktop .mini-window .window-body {
     color: #000;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
 }
 
 body.win95-desktop .mini-window .panel {

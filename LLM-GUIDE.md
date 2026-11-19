@@ -50,6 +50,8 @@ scripts/services/                  services globaux sans interface propre
   clock-store.js                   Win95Clock : date/heure simulées, fuseau (lu par tray-clock.js)
   sound-store.js                   Win95Sounds : événements → sons synthétisés (Web Audio), play(événement)
   mouse-store.js                   Win95Mouse : double-clic recomposé + forme du pointeur
+  ui-scale.js                      Win95UiScale : échelle de l'interface (100 / 125 / 150 %) : variable --win95-k, bouton, onglet du Panneau
+  fullscreen.js                    Win95Fullscreen : plein écran (entrée du menu Démarrer, bouton, premier geste)
   programs-store.js                Win95Programs : programmes « supprimés » (cachés) par compte
   user-files-store.js              Win95UserFiles : Mes documents (IndexedDB, une base par compte)
   recycle-bin-store.js             Win95RecycleBin : Corbeille des raccourcis
@@ -62,7 +64,7 @@ scripts/services/                  services globaux sans interface propre
   win95-menu-bar.js                Win95MenuBar : barre de menus (Jeu ?) des applications, menus déroulants via Win95ContextMenu
   context-guard.js                 bloque le menu contextuel du navigateur (sauf zones de saisie)
   tray-clock.js, zoom-guard.js     horloge ; blocage du zoom de page
-scripts/window-manager/            LE cœur : bureau, icônes, menu Démarrer, création des fenêtres, droits d'accès
+scripts/window-manager/            LE cœur : bureau, icônes, menu Démarrer, création des fenêtres, droits d'accès ; ui-scale.css = dimensions mises à l'échelle (chargée en dernier)
 scripts/window-component/          comportement d'une fenêtre (déplacer, redimensionner)
 scripts/file-explorer/             explorateur (Mes documents, Corbeille)
 scripts/notepad|paint|image-viewer|media-player|display-properties|user-manager/   applications
@@ -102,13 +104,14 @@ Chaque composant = `scripts/<nom>/<nom>-component.js` + `.css`, exposé sur `win
    | Sons | `localStorage["win95.sounds.v1.<id>"]` |
    | Programmes supprimés (cachés) | `localStorage["win95.programs.hidden.v1.<id>"]` |
    | Réglages déclaratifs (`Win95Settings`) | `localStorage["win95.settings.<ns>.v1.<id>"]` |
-| Horloge (date/heure réglées, fuseau) | `localStorage["win95.clock.v1"]` — **machine**, commun à tous les comptes (seule exception) |
+| Horloge (date/heure réglées, fuseau) | `localStorage["win95.clock.v1"]` — **machine**, commun à tous les comptes |
+| Échelle de l'interface | `localStorage["win95.uiScale.v1"]` — **machine**, commun à tous les comptes (avec l'horloge, seule exception : elle doit marcher sans compte) |
    | Mode d'affichage de l'explorateur | `localStorage["win95.explorer.viewMode"]` (global) |
 
    `Win95Security.purgeUserData(id)` efface tout ce qui se termine par `.<id>` et la base IndexedDB : **toute nouvelle clé par compte doit se terminer par `.<id>`** pour être purgée.
 4. **Événements custom** (sur `window`, sauf mention) :
    `win95:auth-changed` (session ouverte), `win95:auth-logout`, `win95:accounts-changed`, `win95:user-files-changed`, `win95:recycle-bin-changed`,
-   `win95:document-shortcuts-changed`, `win95:wallpaper-changed`, `win95:clock-changed`, `win95:sounds-changed`, `win95:mouse-changed`, `win95:programs-changed`, `win95:screensaver-changed`, `win95:local-link-changed`, `win95:local-link-phone-ready`, `win95:settings-changed` (`detail: { ns, values }`), `win95:window-manager-ready`, `win95:control-panel-applets-changed`, `win95:boot-done`, `win95:bluescreen-shown` ; sur l'**élément fenêtre** : `win95:window-closing` (annulable : `preventDefault()` refuse la fermeture, ex. document non
+   `win95:document-shortcuts-changed`, `win95:wallpaper-changed`, `win95:clock-changed`, `win95:sounds-changed`, `win95:mouse-changed`, `win95:programs-changed`, `win95:screensaver-changed`, `win95:local-link-changed`, `win95:local-link-phone-ready`, `win95:ui-scale-changed` (`detail: { scale, percent }`), `win95:fullscreen-changed` (`detail: { active }`), `win95:settings-changed` (`detail: { ns, values }`), `win95:window-manager-ready`, `win95:control-panel-applets-changed`, `win95:boot-done`, `win95:bluescreen-shown` ; sur l'**élément fenêtre** : `win95:window-closing` (annulable : `preventDefault()` refuse la fermeture, ex. document non
    enregistré) et `win95:window-closed` (**toujours y retirer ses écouteurs globaux** : `window.addEventListener(...)` sans nettoyage = fuite et double rendu).
 5. **Les stores sont des singletons réactifs** : toute mutation émet son événement ; les vues écoutent l'événement et se redessinent, elles ne se rafraîchissent pas elles-mêmes à la main.
 6. **Résultats d'opérations** : les stores renvoient `{ ok, message, … }` avec un message français prêt à afficher dans la barre d'état. Ne pas lever d'exception pour une erreur attendue.
@@ -120,7 +123,7 @@ Chaque composant = `scripts/<nom>/<nom>-component.js` + `.css`, exposé sur `win
 
 Une page n'inclut que `scripts/loader.js` (après une configuration facultative). **La liste ordonnée des scripts et feuilles de style vit uniquement dans `MODULES` de `loader.js`** :
 toute nouvelle application ou tout nouveau service s'y ajoute (une seule fois, au bon rang) ; `index.html` n'a jamais à être modifié pour cela. Ordre actuel, par identifiant de module :
-`boot` → `core` (context-guard, tray-clock, zoom-guard, **win95-config**, registre, utils, drag-drop) → `storage` → `services` (accounts, clock, sound, mouse, programs, recycle-bin, wallpaper,
+`boot` → `core` (context-guard, tray-clock, zoom-guard, **win95-config**, registre, utils, drag-drop) → `storage` → `services` (accounts, clock, sound, mouse, **ui-scale, fullscreen**, programs, recycle-bin, wallpaper,
 document-shortcuts, context-menu, menu-bar, dialog, rich-text, user-files) → `media-player` → `image-viewer` → `notepad` → `paint` → `explorer` → `graph` → `control-panel` (property-sheet) →
 `accessories` → `games` → `ambiance` → `control-panel-applets` → `local-link` → `user-manager` → `security` → **`window-manager`** (+ window-component). Puis les plugins du projet.
 
@@ -270,6 +273,17 @@ Cela crée l'icône du Panneau, la fenêtre (feuille de propriétés OK / Annule
 - **`Win95QR`** : encodeur ISO 18004 minimal (octets, niveau M, versions 1 à 10). Il a été relu avec OpenCV (`QRCodeDetectorAruco`, 40 codes de 1 à 213 octets) ; le navigateur de test n'a pas de `BarcodeDetector`, d'où des tests de structure (viseurs, synchronisation, format BCH). Toute modification de l'encodeur doit être re-vérifiée avec un vrai lecteur. Au-delà de 213 octets il lève une erreur (adresse trop longue).
 - `localhost` n'est pas joignable depuis un téléphone : la fenêtre avertit (`isUnreachableFromPhone`), `Win95Config.localLink.baseUrl` corrige. En développement, `npm start` (`tools/dev-server.mjs`, sans dépendance) détecte l'IP du réseau local (`findLanAddress`), ouvre le navigateur du PC sur `localhost` et injecte `window.Win95DevServer = { lanUrl }` dans les pages HTML ; `getBaseUrl` s'en sert quand la page est en localhost : aucune configuration. **Ne jamais ouvrir le bureau du PC sur l'adresse réseau en http** (piège 9 : Web Crypto absent, « Chiffrement indisponible »). La page ne cherche jamais l'IP par une requête réseau.
 
+### 4.3 septies Confort d'affichage : échelle, plein écran, appui tactile, petits écrans
+
+Tout est facultatif et se règle dans `Win95Config.ui` (voir `win95-config.js`) : `scale` (échelle initiale), `scales` (échelles proposées, `[1, 1.25, 1.5]`), `trayButtons` (boutons d'échelle et de plein écran à côté de l'horloge), `fullscreenOnFirstGesture`, `tapToOpen`, `maximizeBelow`.
+
+- **Échelle** (`Win95UiScale`) : 100 % = aspect d'origine. La variable CSS `--win95-k` (sur `<html>`) multiplie les dimensions ; `data-win95-scale` (pourcentage) est posé sur `<body>`. **Pas de `zoom` CSS global** : le gestionnaire de fenêtres lit et écrit des pixels réels (`getBoundingClientRect`, `style.left`), un zoom fausse l'agrandissement des fenêtres et le glisser-déposer (vérifié : fenêtre agrandie à 1600 px sur un écran de 1280). Le choix est mémorisé pour la **machine** (`win95.uiScale.v1`, sans suffixe de compte).
+- **Règle pour tout CSS de la bibliothèque** : un composant redimensionnable écrit ses `font-size` en `calc(Npx * var(--win95-k, 1))` (à 100 % la valeur est identique) ; ses dimensions de chrome (barre de titre, boutons, marges d'un menu…) se multiplient par `var(--win95-k, 1)` ou se règlent dans `ui-scale.css` (chargée en dernier). La hauteur d'un corps de fenêtre est `calc(100% - var(--win95-chrome-h, 24px))` (barre de titre de 22 px × échelle + 2 px), jamais `calc(100% - 24px)`. Les accessoires et jeux à taille fixe (`app-fixed-window` : calculatrice, démineur, cartes…) restent à 100 % : leur taille est fixée en pixels par leur composant.
+- **Grille des icônes** : `desktopGrid` = `desktopGridBase` (96 px à 100 %) × échelle. Un projet aux icônes plus grandes règle `--win95-icon-size` (CSS) et `manager.desktopGridBase` puis appelle `manager.applyUiScale()` ; les icônes déjà placées sont recalées à chaque changement d'échelle.
+- **Plein écran** (`Win95Fullscreen`) : jamais au chargement (le navigateur l'interdit sans geste) ; `fullscreenOnFirstGesture` le demande une seule fois au premier clic ou à la première touche et ne le réimpose pas après un Échap. Entrée « Plein écran » dans Paramètres : application `fullscreen` de `kind: "command"` (aucune fenêtre : `create` renvoie `null`).
+- **Appui tactile** (`tapToOpen`) : n'agit que si `(pointer: coarse)` ; sinon le double-clic recomposé de `Win95Mouse` reste seul actif (il ne faut jamais activer les deux sur la même icône).
+- **Petits écrans** (`maximizeBelow`) : `mountWindow` agrandit les fenêtres redimensionnables (`maximizeIfCompact`) ; jamais les `app-fixed-window`, `property-window` ni `mini-window`. Attendre la fin du chargement des feuilles de style avant d'ouvrir une fenêtre au démarrage : agrandie plus tôt, elle prendrait de mauvaises dimensions.
+
 ### 4.4 Ajouter une règle ou un champ au système de comptes
 
 Compte = `{ id, name, role: "admin"|"user", allowedApps: string[]|null, salt, hash, createdAt }`. Toute modification passe par `Win95Accounts` (jamais d'écriture directe dans `localStorage`).
@@ -307,7 +321,7 @@ Invariants à préserver : au moins un administrateur ; noms uniques (comparaiso
 
 ## 6. CSS : règles pratiques
 
-- Respecter [charte-graphique.md](charte-graphique.md) (contraste, biseaux, 12 px, pas d'angle arrondi). Préfixer **tous** les sélecteurs par `body.win95-desktop`. Classes `composant-element`.
+- Respecter [charte-graphique.md](charte-graphique.md) (contraste, biseaux, 12 px, pas d'angle arrondi). **Mise à l'échelle** : `font-size: calc(12px * var(--win95-k, 1))` et non `12px` (voir §4.3 septies) ; ne jamais utiliser `calc(100% - 24px)` pour un corps de fenêtre. Préfixer **tous** les sélecteurs par `body.win95-desktop`. Classes `composant-element`.
 - Réutiliser : `btn`, `btn start-btn` (bouton de dialogue, gras, 84 px min), `btn explorer-btn small-label` (barre d'outils), `form-95` (champ), `explorer-status` (barre d'état), `windows-scrollbar`,
   `explorer-toolbar`, `window-body`. Biseau en relief : `border:2px solid; border-color:#fff #404040 #404040 #fff;` ; enfoncé : `#808080 #fff #fff #808080`.
 - Hauteur d'un corps d'application : `height: calc(100% - 24px)` (barre de titre) ; zone qui défile : `min-height:0; overflow:auto`.
@@ -350,6 +364,7 @@ Ne laisser ni serveur, ni fichier temporaire (`tests/.tmp/` est nettoyé par les
 - [ ] Application déclarée dans `windowDefinitions`, `createWindow`, menu Démarrer ; restrictions d'accès vérifiées côté action ; `ADMIN_ONLY_APPS` si réservée aux admins.
 - [ ] Interface conforme à la charte (§6 de la charte) ; classes préfixées `body.win95-desktop` ; `color` explicite ; cases à cocher/radios restylées.
 - [ ] Textes français ; messages d'erreur via la barre d'état ou `Win95Dialog`.
+- [ ] Mise à l'échelle : `font-size` en `calc(Npx * var(--win95-k, 1))`, corps de fenêtre en `calc(100% - var(--win95-chrome-h, 24px))`, rendu vérifié à 125 % (`Win95UiScale.set(1.25)`) ; pas de `zoom` CSS.
 - [ ] Pas de `innerHTML` avec données utilisateur ; pas de `\` non échappé dans les chaînes ; relire les fichiers générés par script.
 - [ ] `node --check` OK ; `npm test` vert (et un nouveau test pour ce qui change) ; console vide ; captures examinées.
 - [ ] Rien n'a été commité ni poussé ; `LIB_VERSION` (loader) = version de `package.json` ; `CHANGELOG.md` mis à jour pour tout changement visible d'un projet consommateur.
@@ -405,11 +420,14 @@ Guide complet : [INTEGRATION.md](INTEGRATION.md). Résumé de l'API d'extension 
 | `registerDropType(mime, { desktop, recycleBin })` | types MIME de glisser-déposer acceptés |
 | `registerContextMenuProvider(fn(target, manager) → items \| null)` | menus contextuels (clic droit) |
 | `addTrayItem(element)` | élément dans la zone de notification (avant l'horloge) |
+| `registerApp({ kind: "command" })` | entrée sans fenêtre (`create` renvoie `null`) : plein écran, commandes du menu Démarrer… |
+| `desktopGridBase` + `applyUiScale()` | grille des icônes à 100 % (× échelle) ; à rappeler après l'avoir changée |
+| `Win95UiScale` / `Win95Fullscreen` | échelle de l'interface et plein écran (§4.3 septies) |
 | `Win95FileExplorer.registerSpace(key, { files, shared, rootLabel })` | autre espace de fichiers (ex. Documents partagés), fenêtre avec `space: key` |
 | `Win95FileExplorer.registerContextMenuContributor(fn(entry, explorer) → items)` / `registerDropHandler(fn(payload, explorer))` | menu d'un fichier (ex. « Envoyer à ») ; dépôts spécifiques |
 | `Win95UserFiles.create({ getOwner, changeEvent, shared })` | fabrique un autre espace de documents (même fournisseur de stockage) |
 
-Config utile à un projet : `appName`, `exclude`, `plugins`, `userTray: false` (le projet affiche lui-même le compte), `bootstrap: false` (la page charge déjà Bootstrap), `storage`, `accounts`, `supabase`.
+Config utile à un projet : `ui` (confort d'affichage : `scale`, `scales`, `trayButtons`, `fullscreenOnFirstGesture`, `tapToOpen`, `maximizeBelow`), `appName`, `exclude`, `plugins`, `userTray: false` (le projet affiche lui-même le compte), `bootstrap: false` (la page charge déjà Bootstrap), `storage`, `accounts`, `supabase`.
 Exemple réel : le projet Mecha (`scripts/mecha-plugin/` dans son dépôt) exclut `boot`, `storage`, `user-manager`, `security`, `accounts-store.js`, `user-files-store.js`, fournit ses propres services avec `before`, et enregistre Poste de travail, BDD Union,
 Messagerie, Paramètres, Documents partagés, la Corbeille des mechas, le personnage actif et « Envoyer à » par cette API.
 

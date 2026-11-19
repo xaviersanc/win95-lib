@@ -2,7 +2,7 @@
 body.win95-desktop .display-properties-body {
     display: flex;
     flex-direction: column;
-    height: calc(100% - 24px);
+    height: calc(100% - var(--win95-chrome-h, 24px));
     padding: 6px;
     background: #c0c0c0;
     color: #000;
@@ -21,13 +21,13 @@ body.win95-desktop .display-properties-section legend {
     width: auto;
     margin: 0;
     padding: 0 4px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     color: #000;
 }
 
 body.win95-desktop .display-properties-note {
     margin-top: 6px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     color: #000;
     text-align: center;
 }
@@ -59,7 +59,7 @@ body.win95-desktop .display-properties-monitor-icon {
     align-items: center;
     width: 64px;
     color: #fff;
-    font-size: 10px;
+    font-size: calc(10px * var(--win95-k, 1));
     text-align: center;
     text-shadow: 1px 1px 0 #000;
 }
@@ -117,6 +117,6 @@ body.win95-desktop .display-properties-choice.selected .display-properties-label
 
 body.win95-desktop .display-properties-label {
     padding: 0 2px;
-    font-size: 11px;
+    font-size: calc(11px * var(--win95-k, 1));
     color: #000;
 }

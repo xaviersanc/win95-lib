@@ -1,0 +1,120 @@
+/* Échelle de l'interface (voir scripts/services/ui-scale.js).
+   Chargée EN DERNIER (module « window-manager ») : ses règles l'emportent sur celles des autres feuilles, à spécificité égale.
+   `--win95-k` (posée sur <html> par Win95UiScale) vaut 1 par défaut : à 100 %, chaque valeur ci-dessous est identique à l'original.
+   Les `font-size` des applications sont mis à l'échelle directement dans leurs feuilles (calc(Npx * var(--win95-k, 1))).
+   Les projets peuvent redéfinir --win95-icon-size (taille des icônes du bureau) ; leurs propres dimensions en pixels se multiplient
+   par var(--win95-k, 1). Les accessoires et jeux à taille fixe ne suivent pas l'échelle. */
+
+body.win95-desktop {
+    --win95-title-h: calc(22px * var(--win95-k, 1));
+    --win95-chrome-h: calc(22px * var(--win95-k, 1) + 2px);
+    --win95-taskbar-h: calc(36px * var(--win95-k, 1));
+    --win95-icon-size: calc(32px * var(--win95-k, 1));
+}
+
+/* --- Barre des tâches, bouton Démarrer, boutons de fenêtres, horloge ------------------------------------------------------- */
+body.win95-desktop .taskbar {
+    height: var(--win95-taskbar-h, 36px);
+}
+
+body.win95-desktop .desktop-icons {
+    inset: 0 0 var(--win95-taskbar-h, 36px) 0;
+}
+
+body.win95-desktop .start-btn {
+    padding: calc(4px * var(--win95-k, 1)) calc(10px * var(--win95-k, 1));
+    min-width: calc(84px * var(--win95-k, 1));
+}
+
+body.win95-desktop .start-btn img,
+body.win95-desktop .task-btn img {
+    width: calc(16px * var(--win95-k, 1));
+    height: calc(16px * var(--win95-k, 1));
+}
+
+body.win95-desktop .task-btn {
+    flex-basis: calc(170px * var(--win95-k, 1));
+    min-width: calc(44px * var(--win95-k, 1));
+    height: calc(26px * var(--win95-k, 1));
+}
+
+body.win95-desktop .tray-clock {
+    min-width: calc(64px * var(--win95-k, 1));
+    padding: calc(6px * var(--win95-k, 1)) calc(8px * var(--win95-k, 1));
+}
+
+/* Boutons optionnels de la zone de notification (échelle, plein écran : Win95Config.ui.trayButtons). */
+body.win95-desktop .win95-tray-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: calc(28px * var(--win95-k, 1));
+    height: calc(24px * var(--win95-k, 1));
+    margin-right: 4px;
+    padding: 2px 6px;
+    color: #000;
+    font-size: calc(12px * var(--win95-k, 1));
+    font-weight: bold;
+}
+
+body.win95-desktop .win95-tray-button img {
+    width: calc(16px * var(--win95-k, 1));
+    height: calc(16px * var(--win95-k, 1));
+    image-rendering: pixelated;
+}
+
+/* --- Menu Démarrer et sous-menus ------------------------------------------------------------------------------------------- */
+body.win95-desktop .start-menu {
+    bottom: calc(var(--win95-taskbar-h, 36px) + 2px);
+    width: calc(230px * var(--win95-k, 1));
+    min-height: calc(260px * var(--win95-k, 1));
+}
+
+body.win95-desktop .start-menu-banner {
+    width: calc(34px * var(--win95-k, 1));
+}
+
+body.win95-desktop .start-menu-item {
+    gap: calc(8px * var(--win95-k, 1));
+    padding: calc(6px * var(--win95-k, 1)) calc(8px * var(--win95-k, 1));
+}
+
+body.win95-desktop .start-menu-item img {
+    width: calc(16px * var(--win95-k, 1));
+    height: calc(16px * var(--win95-k, 1));
+    flex-basis: calc(16px * var(--win95-k, 1));
+}
+
+body.win95-desktop .start-submenu {
+    min-width: calc(200px * var(--win95-k, 1));
+}
+
+/* --- Barres de titre ------------------------------------------------------------------------------------------------------- */
+body.win95-desktop .window-title-bar {
+    height: var(--win95-title-h, 22px);
+}
+
+body.win95-desktop .window-title-bar .title-bar-controls button {
+    width: calc(16px * var(--win95-k, 1));
+    min-width: calc(16px * var(--win95-k, 1));
+    height: calc(14px * var(--win95-k, 1));
+}
+
+/* --- Boîtes de dialogue, menus contextuels ------------------------------------------------------------------------------------ */
+body.win95-desktop .win95-dialog-box {
+    width: calc(360px * var(--win95-k, 1));
+}
+
+body.win95-desktop .win95-context-menu {
+    min-width: calc(150px * var(--win95-k, 1));
+}
+
+/* --- Icônes du bureau ------------------------------------------------------------------------------------------------------- */
+body.win95-desktop .desktop-icon {
+    width: calc(76px * var(--win95-k, 1));
+}
+
+body.win95-desktop .desktop-icon img {
+    width: var(--win95-icon-size, 32px);
+    height: var(--win95-icon-size, 32px);
+}

@@ -41,6 +41,7 @@ Référence commentée : `scripts/services/win95-config.js`.
 | `storage.local` / `.supabase` / `.drive` | quotas | `quotaMb`, `maxFileMb`, noms de table/bucket, `apiBase` |
 | `accounts.provider` | `"local"` | `"local"` \| `"supabase"` |
 | `supabase` | vide | `{ url, anonKey }` (clé **publique** anon) |
+| `ui` | tout désactivé, échelle 1 | confort d'affichage : `scale` (échelle initiale : 1, 1.25, 1.5), `scales`, `trayButtons` (boutons d'échelle et de plein écran), `fullscreenOnFirstGesture`, `tapToOpen` (un appui ouvre une icône sur écran tactile), `maximizeBelow` (largeur d'écran en px sous laquelle les fenêtres s'ouvrent agrandies) |
 | `exclude` | `[]` | modules (`"games"`, `"accessories"`, `"boot"`…) ou fichiers (`"accounts-store.js"`) à ne pas charger |
 | `plugins` | `[]` | scripts / styles du projet (voir §4) |
 | `localLink` | `{ baseUrl: "", ttlMinutes: 5 }` | Connexion locale : `baseUrl` = adresse de la page joignable depuis le téléphone (obligatoire si la page est ouverte en `localhost`), durée de validité du QR code |
@@ -84,6 +85,17 @@ window.Win95LocalLink.registerPhonePage((conteneur, { token, expiresAt, appName,
 Côté ordinateur, `Win95LocalLink.getSession()` donne `{ token, url, createdAt, expiresAt }` et l'événement `win95:local-link-changed` signale ouverture, renouvellement et fin de session (`detail.session === null`). Le plugin ordinaire s'en sert pour ouvrir **son propre canal** (WebSocket, Supabase Realtime, WebRTC…) avec le jeton.
 
 Points à connaître : **la bibliothèque ne transporte aucune donnée** entre les deux appareils pour l'instant ; l'échéance de l'adresse n'est qu'un confort d'affichage, **le canal du projet doit vérifier le jeton côté serveur** ; `localhost` n'est pas joignable depuis un téléphone (renseigner `localLink.baseUrl`, ou ouvrir la page par l'adresse réseau du poste) ; en développement, `npm start` (ou `node vendor/win95-lib/tools/dev-server.mjs --dir .` depuis un projet) détecte l'adresse réseau du poste, ouvre la page sur `localhost` et la fournit au QR code : rien à configurer ; pour retirer la fonction, `exclude: ["local-link"]`.
+
+## 4 ter. Confort d'affichage (échelle, plein écran, tactile)
+
+```js
+window.Win95Config = {
+    ui: { scale: 1.25, trayButtons: true, fullscreenOnFirstGesture: true, tapToOpen: true, maximizeBelow: 720 }
+};
+```
+
+L'**échelle** (100 / 125 / 150 %) agrandit tout le bureau : barre des tâches, menu Démarrer, barres de titre, menus, dialogues, icônes, textes. Le visiteur la change avec le bouton de la zone de notification ou dans Propriétés d'affichage > Échelle ; le choix est mémorisé pour la machine. Les dimensions en pixels de **votre** CSS se multiplient par `var(--win95-k, 1)` (à 100 % rien ne change) ; la taille des icônes du bureau se règle avec `--win95-icon-size` (et `manager.desktopGridBase` pour leur espacement). N'utilisez **jamais** un `zoom` CSS global : le gestionnaire de fenêtres calcule ses positions en pixels réels.
+Le **plein écran** ne peut pas être forcé au chargement (le navigateur exige un geste) : `fullscreenOnFirstGesture` le demande au premier clic ou à la première touche, une seule fois. Sans prise en charge (iPhone), bouton et entrée de menu n'apparaissent pas.
 
 ## 5. Stockage, comptes, déploiement
 

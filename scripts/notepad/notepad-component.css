@@ -6,7 +6,7 @@ body.win95-desktop .notepad-window {
 }
 
 body.win95-desktop .notepad-body {
-    height: calc(100% - 24px);
+    height: calc(100% - var(--win95-chrome-h, 24px));
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -17,7 +17,7 @@ body.win95-desktop .notepad-menu-bar {
     gap: 14px;
     align-items: center;
     padding: 2px 8px 3px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     border-bottom: 1px solid #808080;
     background: #c0c0c0;
     color: #000;
@@ -36,7 +36,7 @@ body.win95-desktop .notepad-editor {
     resize: none;
     padding: 6px;
     font-family: "Courier New", monospace;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     line-height: 1.35;
     color: #000;
     background: #fff;
@@ -51,7 +51,7 @@ body.win95-desktop .notepad-status {
     border-top: 1px solid #808080;
     padding: 3px 6px;
     background: #c0c0c0;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     color: #000;
 }
 
@@ -93,15 +93,15 @@ body.win95-desktop .win95-rich-text h3 {
 }
 
 body.win95-desktop .win95-rich-text h1 {
-    font-size: 18px;
+    font-size: calc(18px * var(--win95-k, 1));
 }
 
 body.win95-desktop .win95-rich-text h2 {
-    font-size: 15px;
+    font-size: calc(15px * var(--win95-k, 1));
 }
 
 body.win95-desktop .win95-rich-text h3 {
-    font-size: 13px;
+    font-size: calc(13px * var(--win95-k, 1));
 }
 
 body.win95-desktop .win95-rich-text ul,
@@ -156,14 +156,14 @@ body.win95-desktop .win95-wordpad-toolbar[hidden] {
 body.win95-desktop .win95-wordpad-style {
     width: auto;
     height: 22px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
 }
 
 body.win95-desktop .win95-wordpad-btn {
     min-width: 24px;
     height: 22px;
     padding: 0 6px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     line-height: 1;
 }
 
@@ -199,7 +199,7 @@ body.win95-desktop .win95-wordpad-area {
     background: #fff;
     color: #000;
     font-family: "Times New Roman", serif;
-    font-size: 14px;
+    font-size: calc(14px * var(--win95-k, 1));
     line-height: 1.35;
     outline: none;
 }

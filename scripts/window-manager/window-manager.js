@@ -47,7 +47,11 @@
             this.activeWindow = null;
             this.startMenuOpen = false;
             this.desktopStateStoragePrefix = "win95.desktop.state.v1";
-            this.desktopGrid = { x: 96, y: 96, offsetX: 14, offsetY: 14 };
+            // Grille des icônes du bureau à 100 % ; la grille réelle (desktopGrid) est celle-ci multipliée par l'échelle de l'interface
+            // (Win95UiScale). Un projet aux icônes plus grandes change desktopGridBase puis appelle applyUiScale().
+            this.desktopGridBase = { x: 96, y: 96, offsetX: 14, offsetY: 14 };
+            this.uiScaleApplied = 1;
+            this.desktopGrid = { ...this.desktopGridBase };
             this.desktopIconDrag = null;
             this.desktopIconSuppressClickUntil = 0;
             this.desktopStateLoadPromise = null;
@@ -167,6 +171,17 @@
             this.boundRefreshSession = () => this.refreshSession();
             this.boundHandleContextMenu = this.handleContextMenu.bind(this);
             this.boundHandleDesktopIconActivate = this.handleDesktopIconActivate.bind(this);
+            this.boundHandleDesktopIconDoubleClick = (event) => {
+                if (!this.isTapToOpen()) {
+                    this.handleDesktopIconActivate(event);
+                }
+            };
+            this.boundHandleDesktopIconTap = (event) => {
+                if (this.isTapToOpen()) {
+                    this.handleDesktopIconActivate(event);
+                }
+            };
+            this.boundHandleUiScaleChanged = () => this.applyUiScale();
             this.boundHandleDesktopIconKeydown = this.handleDesktopIconKeydown.bind(this);
             this.boundHandleDesktopIconPointerDown = this.handleDesktopIconPointerDown.bind(this);
             this.boundHandleDesktopIconPointerMove = this.handleDesktopIconPointerMove.bind(this);
@@ -201,8 +216,10 @@
                 this.registerDesktopIcon({ app: "local-link" });
             }
 
+            this.applyUiScale({ rescale: false });
             this.setInitialStates();
             this.bindEvents();
+            window.addEventListener("win95:ui-scale-changed", this.boundHandleUiScaleChanged);
 
             void this.loadDesktopState();
 
@@ -267,7 +284,8 @@
 
             // Les icônes se déplacent via pointer events : le drag HTML5 natif est désactivé.
             iconElement.draggable = false;
-            iconElement.addEventListener("dblclick", this.boundHandleDesktopIconActivate);
+            iconElement.addEventListener("dblclick", this.boundHandleDesktopIconDoubleClick);
+            iconElement.addEventListener("click", this.boundHandleDesktopIconTap);
             iconElement.addEventListener("keydown", this.boundHandleDesktopIconKeydown);
             iconElement.addEventListener("pointerdown", this.boundHandleDesktopIconPointerDown);
             if (!iconElement.hasAttribute("role")) {
@@ -1526,6 +1544,54 @@
             return `app:${iconElement?.dataset?.desktopApp || iconElement.querySelector("span")?.textContent?.trim() || "desktop-icon"}`;
         }
 
+        // Échelle de l'interface (Win95UiScale) : recalcule la grille des icônes et recale celles déjà placées (position multipliée par le
+        // rapport entre l'ancienne et la nouvelle échelle, puis calée sur la grille). rescale: false au démarrage (rien n'est encore placé).
+        applyUiScale({ rescale = true } = {}) {
+            const scale = Number(window.Win95UiScale?.get?.()) || 1;
+            const ratio = scale / this.uiScaleApplied;
+            this.uiScaleApplied = scale;
+            const base = this.desktopGridBase;
+            this.desktopGrid = {
+                x: Math.round(base.x * scale),
+                y: Math.round(base.y * scale),
+                offsetX: Math.round(base.offsetX * scale),
+                offsetY: Math.round(base.offsetY * scale)
+            };
+            if (!rescale || ratio === 1) {
+                return;
+            }
+            (this.desktopIcons || []).forEach((iconElement) => {
+                iconElement.style.left = `${Math.round(this.parsePixelValue(iconElement.style.left) * ratio)}px`;
+                iconElement.style.top = `${Math.round(this.parsePixelValue(iconElement.style.top) * ratio)}px`;
+            });
+            (this.desktopIcons || []).forEach((iconElement) => {
+                const snapped = this.getSnappedDesktopIconPosition(iconElement);
+                iconElement.style.left = `${snapped.left}px`;
+                iconElement.style.top = `${snapped.top}px`;
+            });
+            if (this.hasSession()) {
+                void this.saveDesktopState();
+            }
+        }
+
+        // Écran tactile : un simple appui sur une icône du bureau l'ouvre (Win95Config.ui.tapToOpen), le double-clic étant pénible au doigt.
+        isTapToOpen() {
+            return Boolean(window.Win95Config?.ui?.tapToOpen) && Boolean(window.matchMedia?.("(pointer: coarse)")?.matches);
+        }
+
+        // Petit écran : les fenêtres redimensionnables s'ouvrent agrandies (Win95Config.ui.maximizeBelow = largeur d'écran en px).
+        maximizeIfCompact(windowElement) {
+            const limit = Number(window.Win95Config?.ui?.maximizeBelow) || 0;
+            if (!limit || window.innerWidth > limit || windowElement.dataset.maximized === "true") {
+                return;
+            }
+            // Accessoires et jeux à taille fixe, feuilles de propriétés : jamais agrandis.
+            if (windowElement.matches(".app-fixed-window, .property-window, .mini-window") || !windowElement.querySelector('[data-window-action="maximize"]')) {
+                return;
+            }
+            this.toggleMaximize(windowElement, { silent: true });
+        }
+
         getDesktopIconBounds() {
             const desktop = document.querySelector(".desktop");
             if (!desktop) {
@@ -1536,8 +1602,8 @@
             const taskbar = document.querySelector(".taskbar");
             const taskbarHeight = taskbar ? taskbar.offsetHeight : 36;
             return {
-                maxLeft: Math.max(0, Math.floor(desktopRect.width - 96)),
-                maxTop: Math.max(0, Math.floor(desktopRect.height - taskbarHeight - 72))
+                maxLeft: Math.max(0, Math.floor(desktopRect.width - this.desktopGrid.x)),
+                maxTop: Math.max(0, Math.floor(desktopRect.height - taskbarHeight - Math.round(this.desktopGrid.y * 0.75)))
             };
         }
 
@@ -1952,6 +2018,7 @@
 
             this.windows.push(windowElement);
             this.setInitialWindowPosition(windowElement);
+            this.maximizeIfCompact(windowElement);
             return windowElement;
         }
 
@@ -2467,8 +2534,10 @@
             (this.getWindowTaskbarButton(windowElement) || this.getTaskbarButton(windowElement.dataset.windowApp))?.classList.add("active");
         }
 
-        toggleMaximize(windowElement) {
-            window.Win95Sounds?.play("maximize");
+        toggleMaximize(windowElement, { silent = false } = {}) {
+            if (!silent) {
+                window.Win95Sounds?.play("maximize");
+            }
             const desktop = document.querySelector(".desktop");
             if (!desktop) {
                 return;

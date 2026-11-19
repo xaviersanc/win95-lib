@@ -37,40 +37,6 @@ a {
 
 /*
 
-Header
-
-*/
-header {
-    position: relative;
-    background-color: black;
-    height: 100vh;
-    min-height: 25rem;
-    width: 100%;
-    overflow: hidden;
-}
-
-header video {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    z-index: 0;
-    -ms-transform: translateX(-50%) translateY(-50%);
-    -moz-transform: translateX(-50%) translateY(-50%);
-    -webkit-transform: translateX(-50%) translateY(-50%);
-    transform: translateX(-50%) translateY(-50%);
-}
-
-header .container {
-    position: relative;
-    z-index: 2;
-}
-
-/*
-
 Scrollbar (only chrome & safari)
 
 */
@@ -253,7 +219,7 @@ FOOTER
     margin-top: 2px;
 
     text-align: right;
-    font-size: 14px;
+    font-size: calc(14px * var(--win95-k, 1));
     margin-right: 0px;
 }
 
@@ -429,7 +395,7 @@ body.win95-desktop .window-title-bar {
 
 body.win95-desktop .window-title-bar .title-bar-text {
     color: #fff;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     font-weight: bold;
     letter-spacing: 0.1px;
     white-space: nowrap;
@@ -452,7 +418,7 @@ body.win95-desktop .window-title-bar .title-bar-controls button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: calc(10px * var(--win95-k, 1));
     line-height: 1;
     font-weight: bold;
     font-family: "MS Sans Serif", Tahoma, sans-serif;
@@ -465,7 +431,7 @@ body.win95-desktop .window-title-bar .title-bar-controls button:focus {
 }
 
 body.win95-desktop .window-content {
-    height: calc(100% - 24px);
+    height: calc(100% - var(--win95-chrome-h, 24px));
     overflow: hidden;
     padding: 0;
 }

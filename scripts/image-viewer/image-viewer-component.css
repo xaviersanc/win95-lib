@@ -6,7 +6,7 @@ body.win95-desktop .image-viewer-window {
 }
 
 body.win95-desktop .image-viewer-body {
-    height: calc(100% - 24px);
+    height: calc(100% - var(--win95-chrome-h, 24px));
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -25,7 +25,7 @@ body.win95-desktop .image-viewer-status {
     margin-left: auto;
     padding: 3px 6px;
     border: 2px inset #d5d5d5;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     color: #000;
     background: #fff;
     min-width: 60px;

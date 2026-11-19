@@ -41,6 +41,14 @@
         // Connexion locale (téléphone) : baseUrl = adresse de la page joignable depuis le téléphone (si l'adresse du navigateur est
         // localhost ou un fichier) ; ttlMinutes = durée de validité d'un QR code.
         localLink: { baseUrl: "", ttlMinutes: 5 },
+        // Confort d'affichage (tout est facultatif, désactivé par défaut) :
+        //   scale                      échelle initiale de l'interface si le visiteur n'a rien choisi (1 = aspect d'origine de Windows 95) ;
+        //   scales                     échelles proposées (bouton de la zone de notification, Panneau de configuration > Affichage > Échelle) ;
+        //   trayButtons                affiche dans la zone de notification un bouton d'échelle et un bouton « plein écran » ;
+        //   fullscreenOnFirstGesture   demande le plein écran au premier clic ou à la première touche (un navigateur l'interdit sans geste) ;
+        //   tapToOpen                  écran tactile : un simple appui sur une icône du bureau l'ouvre (au lieu du double-clic) ;
+        //   maximizeBelow              largeur d'écran (px) en dessous de laquelle les fenêtres s'ouvrent agrandies (0 = jamais).
+        ui: { scale: 1, scales: [1, 1.25, 1.5], trayButtons: false, fullscreenOnFirstGesture: false, tapToOpen: false, maximizeBelow: 0 },
         storage: {
             provider: "local",
             local: { quotaMb: 50, maxFileMb: 10 },

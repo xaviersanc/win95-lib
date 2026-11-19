@@ -20,7 +20,7 @@
     //   Les plugins y sont ignorés, sauf ceux déclarés `phone: true` (leur contenu s'accroche à Win95LocalLink.registerPhonePage) ;
     // Cette liste est LA référence de l'ordre de chargement : toute nouvelle application s'y ajoute (une seule fois).
 
-    const LIB_VERSION = "1.5.0";
+    const LIB_VERSION = "1.6.0";
     const SUPABASE_JS = {
         src: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js",
         integrity: "sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"
@@ -53,7 +53,7 @@
             id: "services",
             js: [
                 "scripts/services/accounts-store.js", "scripts/services/clock-store.js", "scripts/services/sound-store.js",
-                "scripts/services/mouse-store.js", "scripts/services/win95-settings.js", "scripts/services/programs-store.js", "scripts/services/recycle-bin-store.js",
+                "scripts/services/mouse-store.js", "scripts/services/ui-scale.js", "scripts/services/fullscreen.js", "scripts/services/win95-settings.js", "scripts/services/programs-store.js", "scripts/services/recycle-bin-store.js",
                 "scripts/services/wallpaper-store.js", "scripts/services/document-shortcuts-store.js", "scripts/services/win95-context-menu.js",
                 "scripts/services/win95-menu-bar.js", "scripts/services/win95-dialog.js", "scripts/services/win95-rich-text.js",
                 "scripts/services/user-files-store.js"
@@ -110,7 +110,7 @@
         },
         { id: "user-manager", apps: ["user-manager"], css: ["scripts/user-manager/user-manager-component.css"], js: ["scripts/user-manager/user-manager-component.js"] },
         { id: "security", css: ["scripts/security/security.css"], js: ["scripts/security/security-manager.js"] },
-        { id: "window-manager", js: ["scripts/window-manager/window-manager.js", "scripts/window-component/window-component.js"] }
+        { id: "window-manager", css: ["scripts/window-manager/ui-scale.css"], js: ["scripts/window-manager/window-manager.js", "scripts/window-component/window-component.js"] }
     ];
 
     const script = document.currentScript;

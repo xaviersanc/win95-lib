@@ -34,7 +34,7 @@ body.win95-desktop .security-body {
     padding: 14px 12px 10px;
     background: #c0c0c0;
     color: #000;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
 }
 
 body.win95-desktop .security-icon {

@@ -25,7 +25,8 @@ Sources : `assets/win95.css` (base), `scripts/window-manager/window-manager.css`
    du navigateur ni une bibliothèque de composants.
 10. **Clavier et focus** : tout élément cliquable est un `<button>` (ou un champ) ; focus visible en pointillé noir 1 px ; Échap ferme une fenêtre modale ; Entrée valide le bouton principal.
 11. **Animations** : courtes, utiles, respectant `prefers-reduced-motion`.
-12. **Versionner les fichiers** chargés dans `index.html` (`?v=`, à incrémenter à chaque modification) et respecter l'ordre de chargement documenté dans le README.
+12. **Échelle de l'interface** : tout `font-size` en pixels d'un composant s'écrit `calc(Npx * var(--win95-k, 1))` (identique à 100 %, plus grand à 125 / 150 %) ; les dimensions de chrome se multiplient par `var(--win95-k, 1)` ; un corps de fenêtre fait `calc(100% - var(--win95-chrome-h, 24px))`. Jamais de `zoom` CSS global.
+13. **Versionner les fichiers** chargés dans `index.html` (`?v=`, à incrémenter à chaque modification) et respecter l'ordre de chargement documenté dans le README.
 
 ---
 
@@ -93,7 +94,7 @@ Barre de titre → barre de menus (`notepad-menu-bar`) → (barre d'outils) → 
 
 - [ ] Aucun texte blanc hors fond `#000080` / barre de titre ; `color: #000` explicite.
 - [ ] Composants du §4 réutilisés ; toute nouvelle classe est préfixée `body.win95-desktop` et ajoutée au §4.
-- [ ] Biseaux du §3, pas d'angle arrondi, police 12 px (11 px minimum).
+- [ ] Biseaux du §3, pas d'angle arrondi, police 12 px (11 px minimum), à l'échelle (`var(--win95-k, 1)`) : vérifié à 125 %.
 - [ ] Un seul bouton principal ; libellés français.
 - [ ] Information jamais portée par la couleur seule.
 - [ ] Clavier : focus visible, Échap / Entrée ; éléments cliquables = `<button>`.

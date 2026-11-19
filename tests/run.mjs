@@ -611,7 +611,7 @@ test("explorateur : un double-clic ouvre le fichier une seule fois", async (page
 test("toutes les applications s'ouvrent et se ferment sans erreur", async (page) => {
     await open(page);
     await createAdmin(page);
-    const apps = await page.evaluate(() => Object.keys(window.Win95WindowManager.windowDefinitions));
+    const apps = await page.evaluate(() => Object.keys(window.Win95WindowManager.windowDefinitions).filter((key) => window.Win95WindowManager.windowDefinitions[key].kind !== "command"));
     for (const app of apps) {
         const opened = await page.evaluate((key) => Boolean(window.Win95WindowManager.openApp(key)), app);
         assert(opened, `ouverture de ${app}`);
@@ -1106,12 +1106,180 @@ test("serveur de développement : adresse réseau détectée, fichiers servis, a
 
 // --- Exécution --------------------------------------------------------------------------------------------------
 
+// --- Confort d'affichage : échelle, plein écran, appui tactile, petits écrans -----------------------------------------------------
+
+test("échelle de l'interface : variable CSS, barre des tâches, titres, fenêtre agrandie, mémorisation de la machine, événement", async (page) => {
+    await open(page, { config: { ui: { scale: 1.25 } } });
+    await createAdmin(page);
+    const read = () => page.evaluate(() => ({
+        k: document.documentElement.style.getPropertyValue("--win95-k"),
+        attribute: document.body.dataset.win95Scale,
+        taskbar: Math.round(document.querySelector(".taskbar").getBoundingClientRect().height),
+        title: document.querySelector(".window-title-bar") ? Math.round(document.querySelector(".window-title-bar").getBoundingClientRect().height) : null,
+        icon: Math.round(document.querySelector(".desktop-icon img").getBoundingClientRect().width)
+    }));
+    await page.evaluate(() => { window.__scaleEvents = []; window.addEventListener("win95:ui-scale-changed", (event) => window.__scaleEvents.push(event.detail.percent)); });
+    await page.evaluate(() => window.Win95WindowManager.openApp("notepad"));
+    equal(await read(), { k: "1.25", attribute: "125", taskbar: 45, title: 28, icon: 40 }, "échelle initiale de la configuration (125 %)");
+    await page.evaluate(() => window.Win95UiScale.set(1.5));
+    equal(await read(), { k: "1.5", attribute: "150", taskbar: 54, title: 33, icon: 48 }, "après set(1.5)");
+    equal(await page.evaluate(() => window.__scaleEvents), [150], "événement win95:ui-scale-changed");
+    equal(await page.evaluate(() => localStorage.getItem("win95.uiScale.v1")), "1.5", "choix mémorisé pour la machine (sans suffixe de compte)");
+    await page.evaluate(() => window.Win95UiScale.set(1.3));
+    equal(await page.evaluate(() => window.Win95UiScale.get()), 1.25, "une valeur est arrondie à l'échelle proposée la plus proche");
+    // Fenêtre agrandie : couvre exactement le bureau, au-dessus de la barre des tâches (les calculs de position restent en pixels réels).
+    await page.click("[data-window-app='notepad'] [data-window-action='maximize']");
+    const box = await page.locator("[data-window-app='notepad']").boundingBox();
+    const taskbar = await page.locator(".taskbar").boundingBox();
+    assert(Math.abs(box.width - 1280) <= 1 && Math.abs(box.y + box.height - taskbar.y) <= 2, `fenêtre agrandie mal dimensionnée à 125 % : ${JSON.stringify(box)} (barre des tâches à ${taskbar.y})`);
+    // Le corps de la fenêtre remplit la fenêtre sous la barre de titre, quelle que soit l'échelle.
+    const gap = await page.evaluate(() => {
+        const win = document.querySelector("[data-window-app='notepad']").getBoundingClientRect();
+        const body = document.querySelector("[data-window-app='notepad'] .notepad-body").getBoundingClientRect();
+        const title = document.querySelector("[data-window-app='notepad'] .window-title-bar").getBoundingClientRect();
+        return { top: Math.round(body.top - title.bottom), bottom: Math.round(win.bottom - body.bottom) };
+    });
+    assert(gap.top <= 3 && gap.bottom <= 6, `le corps de la fenêtre ne remplit plus la fenêtre à 125 % : ${JSON.stringify(gap)}`);
+    // Le choix de la machine l'emporte sur la configuration au rechargement.
+    await page.reload();
+    await page.waitForFunction(() => window.Win95WindowManager && window.Win95UiScale);
+    equal(await page.evaluate(() => document.body.dataset.win95Scale), "125", "après rechargement (choix mémorisé : 125 %)");
+});
+
+test("échelle : bouton de la zone de notification, onglet « Échelle » des Propriétés d'affichage, grille des icônes", async (page) => {
+    await open(page, { config: { ui: { trayButtons: true } } });
+    await createAdmin(page);
+    equal(await page.locator("[data-win95-scale-button]").innerText(), "100 %", "bouton d'échelle : valeur par défaut");
+    const gridBefore = await page.evaluate(() => ({ ...window.Win95WindowManager.desktopGrid }));
+    equal(gridBefore, { x: 96, y: 96, offsetX: 14, offsetY: 14 }, "grille des icônes à 100 %");
+    const iconBefore = await page.evaluate(() => { const i = document.querySelector(".desktop-icon"); return { left: parseFloat(i.style.left), top: parseFloat(i.style.top) }; });
+    await page.click("[data-win95-scale-button]");
+    equal(await page.locator("[data-win95-scale-button]").innerText(), "125 %", "bouton d'échelle : après un clic");
+    equal(await page.evaluate(() => window.Win95WindowManager.desktopGrid.x), 120, "la grille des icônes suit l'échelle");
+    const iconAfter = await page.evaluate(() => { const i = document.querySelector(".desktop-icon"); return { left: parseFloat(i.style.left), top: parseFloat(i.style.top) }; });
+    assert(iconAfter.left > iconBefore.left && iconAfter.top >= iconBefore.top, `les icônes déjà placées suivent l'échelle : ${JSON.stringify(iconBefore)} -> ${JSON.stringify(iconAfter)}`);
+    // Propriétés d'affichage > Échelle.
+    await page.evaluate(() => window.Win95WindowManager.openApp("display-properties"));
+    const win = "[data-window-app='display-properties']";
+    await page.click(`${win} .property-tab:has-text("Échelle")`);
+    assert(await page.locator(`${win} .property-choice[data-scale="1.25"]`).evaluate((node) => node.classList.contains("selected")), "l'échelle courante est cochée");
+    await page.click(`${win} .property-choice[data-scale="1.5"]`);
+    equal(await page.evaluate(() => window.Win95UiScale.get()), 1.25, "rien ne change avant « Appliquer »");
+    await page.click(`${win} .property-buttons .btn:has-text("Appliquer")`);
+    equal(await page.evaluate(() => window.Win95UiScale.get()), 1.5, "« Appliquer » change l'échelle");
+    equal(await page.locator("[data-win95-scale-button]").innerText(), "150 %", "le bouton suit un changement fait ailleurs");
+});
+
+test("échelle : sans le module, rien ne change ; une seule échelle proposée = aucun bouton", async (page) => {
+    await open(page, { config: { ui: { trayButtons: true, scales: [1] } } });
+    await createAdmin(page);
+    equal(await page.locator("[data-win95-scale-button]").count(), 0, "aucun bouton quand une seule échelle est proposée");
+    equal(await page.evaluate(() => window.Win95UiScale.scales()), [1], "échelles proposées");
+    equal(await page.evaluate(() => window.Win95UiScale.set(2)), { ok: true, message: "Échelle : 100 %." }, "set() ramène à l'échelle proposée");
+});
+
+test("plein écran : demandé une seule fois au premier geste, bouton, entrée du menu Démarrer", async (page) => {
+    // Le plein écran réel dépend du navigateur de test : on remplace l'API par un faux qui compte les appels.
+    await page.addInitScript(() => {
+        window.__fs = { enter: 0, exit: 0, current: null };
+        Object.defineProperty(document, "fullscreenEnabled", { value: true });
+        Object.defineProperty(document, "fullscreenElement", { get: () => window.__fs.current });
+        Element.prototype.requestFullscreen = function () { window.__fs.enter += 1; window.__fs.current = this; return Promise.resolve(); };
+        document.exitFullscreen = () => { window.__fs.exit += 1; window.__fs.current = null; return Promise.resolve(); };
+    });
+    await open(page, { config: { ui: { trayButtons: true, fullscreenOnFirstGesture: true } } });
+    await createAdmin(page);
+    equal(await page.evaluate(() => window.__fs.enter), 1, "le geste de création du compte (clic) déclenche le plein écran, une seule fois");
+    await page.evaluate(() => { window.__fs.current = null; });
+    await page.mouse.click(600, 600);
+    equal(await page.evaluate(() => window.__fs.enter), 1, "pas de nouvelle demande après une sortie (Échap)");
+    await page.click("[data-win95-fullscreen-button]");
+    equal(await page.evaluate(() => window.__fs.enter), 2, "le bouton entre en plein écran");
+    await page.click("[data-win95-fullscreen-button]");
+    equal(await page.evaluate(() => window.__fs.exit), 1, "le bouton sort du plein écran");
+    const group = await page.evaluate(() => window.Win95WindowManager.startMenuTree.find((entry) => entry.label === "Paramètres").items.map((entry) => entry.app || entry.label));
+    assert(group.includes("fullscreen"), "entrée « Plein écran » dans Paramètres du menu Démarrer");
+    equal(await page.evaluate(() => Boolean(window.Win95WindowManager.openApp("fullscreen"))), false, "l'entrée n'ouvre aucune fenêtre");
+    equal(await page.evaluate(() => window.__fs.enter), 3, "l'entrée bascule le plein écran");
+});
+
+test("plein écran : désactivé par défaut (aucun geste interprété) et absent si le navigateur ne le permet pas", async (page) => {
+    await page.addInitScript(() => {
+        window.__fs = { enter: 0 };
+        Object.defineProperty(document, "fullscreenEnabled", { value: true });
+        Element.prototype.requestFullscreen = function () { window.__fs.enter += 1; return Promise.resolve(); };
+    });
+    await open(page);
+    await createAdmin(page);
+    await page.mouse.click(600, 600);
+    equal(await page.evaluate(() => window.__fs.enter), 0, "sans option, le plein écran n'est jamais demandé tout seul");
+    equal(await page.locator("[data-win95-fullscreen-button]").count(), 0, "sans option, aucun bouton");
+});
+
+test("plein écran : sans prise en charge du navigateur, ni bouton ni entrée de menu", async (page) => {
+    await page.addInitScript(() => Object.defineProperty(document, "fullscreenEnabled", { value: false }));
+    await open(page, { config: { ui: { trayButtons: true, fullscreenOnFirstGesture: true } } });
+    await createAdmin(page);
+    equal(await page.locator("[data-win95-fullscreen-button]").count(), 0, "aucun bouton");
+    equal(await page.evaluate(() => Boolean(window.Win95WindowManager.windowDefinitions.fullscreen)), false, "aucune application « fullscreen »");
+    equal(await page.evaluate(() => window.Win95Fullscreen.isSupported()), false, "isSupported()");
+});
+
+test("écran tactile : un simple appui ouvre une icône du bureau quand ui.tapToOpen est activé (sinon double-clic)", { device: { viewport: { width: 800, height: 900 }, hasTouch: true, isMobile: true } }, async (page) => {
+    await open(page, { config: { ui: { tapToOpen: true } } });
+    await createAdmin(page);
+    await page.locator("[data-desktop-app='internet-explorer']").tap();
+    await page.waitForSelector("[data-window-app='internet-explorer']", { timeout: 3000 });
+    equal(await page.locator("[data-window-app='internet-explorer']").count(), 1, "un appui ouvre l'icône");
+});
+
+test("écran tactile : sans ui.tapToOpen, un simple appui n'ouvre pas l'icône", { device: { viewport: { width: 800, height: 900 }, hasTouch: true, isMobile: true } }, async (page) => {
+    await open(page);
+    await createAdmin(page);
+    await page.locator("[data-desktop-app='internet-explorer']").tap();
+    await page.waitForTimeout(700);
+    equal(await page.locator("[data-window-app='internet-explorer']").count(), 0, "comportement d'origine conservé (double-clic)");
+});
+
+test("petits écrans : les fenêtres redimensionnables s'ouvrent agrandies sous ui.maximizeBelow, pas les autres", async (page) => {
+    await page.setViewportSize({ width: 700, height: 900 });
+    await open(page, { config: { ui: { maximizeBelow: 720 } } });
+    await createAdmin(page);
+    await page.evaluate(() => window.Win95WindowManager.openApp("notepad"));
+    equal(await page.locator("[data-window-app='notepad']").getAttribute("data-maximized"), "true", "Bloc-notes agrandi à l'ouverture");
+    const box = await page.locator("[data-window-app='notepad']").boundingBox();
+    assert(box.x === 0 && Math.abs(box.width - 700) <= 1, `fenêtre agrandie à la largeur de l'écran : ${JSON.stringify(box)}`);
+    await page.evaluate(() => window.Win95WindowManager.openApp("calculator"));
+    assert((await page.locator("[data-window-app='calculator']").getAttribute("data-maximized")) !== "true", "une fenêtre à taille fixe n'est pas agrandie");
+    await page.evaluate(() => window.Win95WindowManager.openApp("mouse"));
+    assert((await page.locator("[data-window-app='mouse']").getAttribute("data-maximized")) !== "true", "un applet (feuille de propriétés) n'est pas agrandi");
+});
+
+test("petits écrans : sans l'option, ou sur un grand écran, aucune fenêtre n'est agrandie d'office", async (page) => {
+    await open(page, { config: { ui: { maximizeBelow: 720 } } });
+    await createAdmin(page);
+    await page.evaluate(() => window.Win95WindowManager.openApp("notepad"));
+    assert((await page.locator("[data-window-app='notepad']").getAttribute("data-maximized")) !== "true", "grand écran : pas d'agrandissement");
+});
+
+test("la feuille de base ne style plus les éléments <header> de la page (règle globale supprimée)", async (page) => {
+    await open(page);
+    await createAdmin(page);
+    const height = await page.evaluate(() => {
+        const header = document.createElement("header");
+        header.textContent = "En-tête d'un projet";
+        document.body.appendChild(header);
+        return Math.round(header.getBoundingClientRect().height);
+    });
+    assert(height < 80, `un <header> ne doit plus occuper 100 % de la hauteur de l'écran : ${height} px`);
+});
+
 let failed = 0;
 for (const { name, options, fn } of tests) {
     if (only && !name.includes(only)) {
         continue;
     }
-    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, ...(options.device || {}) });
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));

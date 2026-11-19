@@ -29,7 +29,7 @@ body.win95-desktop .logout-modal-body {
     padding: 14px 12px;
     background: silver;
     color: #000;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
 }
 
 body.win95-desktop .logout-modal-footer {
@@ -57,7 +57,7 @@ body.win95-desktop .desktop-icon {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     line-height: 1.1;
     user-select: none;
     cursor: default;
@@ -145,7 +145,7 @@ body.win95-desktop .start-btn {
     flex: none;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     font-weight: bold;
     padding: 4px 10px;
     min-width: 84px;
@@ -191,7 +191,7 @@ body.win95-desktop .start-menu-banner-text {
     transform: rotate(180deg);
     font-weight: bold;
     letter-spacing: 0.5px;
-    font-size: 16px;
+    font-size: calc(16px * var(--win95-k, 1));
 }
 
 body.win95-desktop .start-menu-items {
@@ -212,7 +212,7 @@ body.win95-desktop .start-menu-item {
     background: transparent;
     text-align: left;
     padding: 6px 8px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     color: #000;
 }
 
@@ -253,7 +253,7 @@ body.win95-desktop .task-btn {
     min-width: 44px;
     height: 26px;
     padding: 2px 6px;
-    font-size: 11px;
+    font-size: calc(11px * var(--win95-k, 1));
     text-align: left;
     white-space: nowrap;
     overflow: hidden;
@@ -292,7 +292,7 @@ body.win95-desktop .tray-clock {
     border-right: 2px solid #fff;
     border-bottom: 2px solid #fff;
     color: #000;
-    font-size: 11px;
+    font-size: calc(11px * var(--win95-k, 1));
     line-height: 1;
 }
 
@@ -319,7 +319,7 @@ body.win95-desktop .win95-dialog-body {
     padding: 16px 14px;
     background: silver;
     color: #000;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
 }
 
 body.win95-desktop .win95-dialog-icon {
@@ -366,7 +366,7 @@ body.win95-desktop .win95-context-menu {
     border: 1px solid;
     border-color: #dfdfdf #000 #000 #dfdfdf;
     box-shadow: inset 1px 1px #fff, inset -1px -1px #808080;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     color: #000;
 }
 
@@ -419,7 +419,7 @@ body.win95-desktop .win95-context-item.has-submenu::after {
     content: "►";
     position: absolute;
     right: 6px;
-    font-size: 8px;
+    font-size: calc(8px * var(--win95-k, 1));
     line-height: 16px;
 }
 
@@ -525,7 +525,7 @@ body.win95-desktop .shutdown-screen {
     background: #000;
     color: #ff8c00;
     font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
-    font-size: 16px;
+    font-size: calc(16px * var(--win95-k, 1));
     text-align: center;
     cursor: pointer;
 }
@@ -536,7 +536,7 @@ body.win95-desktop .shutdown-screen p {
 }
 
 body.win95-desktop .shutdown-screen .shutdown-hint {
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     color: #808080;
 }
 
@@ -548,7 +548,7 @@ body.win95-desktop .start-menu-group {
 body.win95-desktop .start-menu-item.has-submenu::after {
     content: "►";
     margin-left: auto;
-    font-size: 8px;
+    font-size: calc(8px * var(--win95-k, 1));
 }
 
 body.win95-desktop .start-menu-group:hover > .start-menu-item,
@@ -583,11 +583,11 @@ body.win95-desktop .app-fixed-window [data-window-action="maximize"] {
 }
 
 body.win95-desktop .app-body {
-    height: calc(100% - 24px);
+    height: calc(100% - var(--win95-chrome-h, 24px));
     padding: 0;
     background: #c0c0c0;
     color: #000;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     overflow: hidden;
 }
 
@@ -607,7 +607,7 @@ body.win95-desktop .win95-menubar-item {
     border: 0;
     background: transparent;
     color: #000;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     cursor: default;
 }
 
@@ -638,7 +638,7 @@ body.win95-desktop .tray-user {
     border-color: #808080 #fff #fff #808080;
     background: #c0c0c0;
     color: #000;
-    font-size: 11px;
+    font-size: calc(11px * var(--win95-k, 1));
     white-space: nowrap;
     overflow: hidden;
 }

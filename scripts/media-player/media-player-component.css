@@ -4,7 +4,7 @@ body.win95-desktop .mp {
     padding: 8px 8px 0;
     background: #c0c0c0;
     color: #000;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
 }
 
 body.win95-desktop .mp-display {
@@ -262,7 +262,7 @@ body.win95-desktop .mp-row {
     border: 0;
     background: #fff;
     color: #000;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     text-align: left;
     cursor: default;
 }
@@ -331,7 +331,7 @@ body.win95-desktop .tray-media {
     border-color: #808080 #fff #fff #808080;
     background: #c0c0c0;
     color: #000;
-    font-size: 11px;
+    font-size: calc(11px * var(--win95-k, 1));
 }
 
 body.win95-desktop .tray-media[hidden] {

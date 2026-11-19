@@ -6,7 +6,7 @@ body.win95-desktop .paint-window {
 }
 
 body.win95-desktop .paint-body {
-    height: calc(100% - 24px);
+    height: calc(100% - var(--win95-chrome-h, 24px));
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -300,7 +300,7 @@ body.win95-desktop .paint-status {
     padding: 2px;
     border-top: 1px solid #fff;
     background: #c0c0c0;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     color: #000;
 }
 

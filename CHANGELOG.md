@@ -2,6 +2,25 @@
 
 Versionnement sémantique : une version **majeure** pour tout changement incompatible de l'API d'extension, de la configuration, des fournisseurs, des clés de stockage, des événements `win95:*` ou de l'ordre de chargement.
 
+## 1.6.0 — Confort d'affichage : échelle de l'interface, plein écran, appui tactile, petits écrans
+
+Version mineure : rien d'existant ne change de comportement tant que les nouvelles options de `Win95Config.ui` ne sont pas activées (échelle à 100 % = rendu identique à la 1.5.0). Ajouts de configuration, d'une clé de stockage, d'événements et de deux fichiers dans le module `services` ; une feuille de style (`scripts/window-manager/ui-scale.css`) s'ajoute au module `window-manager`. Né du projet portfolio : ces mécanismes sont génériques (Mecha en profite aussi), ils vivent donc ici et non dans un projet.
+
+**Ajouts**
+- **Échelle de l'interface** (`Win95UiScale`, `scripts/services/ui-scale.js`) : 100 % = aspect d'origine, 125 % ou 150 % = le même bureau en plus grand (barre des tâches, menu Démarrer, barres de titre, boutons, menus, boîtes de dialogue, icônes du bureau, textes des applications). `get / set / cycle / scales / format`, événement `win95:ui-scale-changed` (`detail: { scale, percent }`). Mécanisme : la variable CSS `--win95-k` (sur `<html>`) et l'attribut `data-win95-scale` (sur `<body>`) ; tous les `font-size` en pixels de la bibliothèque deviennent \`calc(Npx * var(--win95-k, 1))\`, les dimensions de l'interface sont dans \`ui-scale.css\`. **Un zoom CSS global est impossible** : le gestionnaire de fenêtres calcule ses positions avec des pixels réels (constaté : fenêtre agrandie trop large, glisser-déposer décalé). Les accessoires et jeux à taille fixe (calculatrice, démineur, cartes, Paint…) ne suivent pas l'échelle.
+  - Configuration : `ui.scale` (échelle initiale, 1 par défaut), `ui.scales` (échelles proposées, `[1, 1.25, 1.5]`).
+  - Stockage : `localStorage["win95.uiScale.v1"]` — réglage de la **machine**, commun à tous les comptes (seconde exception à la règle « clé par compte », avec l'horloge) : il doit marcher sans compte.
+  - Interface : onglet **Échelle** des Propriétés d'affichage (boutons radio, « Appliquer ») ; bouton de la zone de notification avec `ui.trayButtons`.
+  - Gestionnaire de fenêtres : `desktopGridBase` (grille des icônes à 100 %) × échelle = `desktopGrid` ; `applyUiScale()` recale les icônes déjà placées ; les bornes de déplacement des icônes suivent la grille. Variables CSS réglables par un projet : `--win95-icon-size` (taille des icônes du bureau, 32 px × échelle par défaut), `--win95-title-h`, `--win95-chrome-h`, `--win95-taskbar-h`.
+- **Plein écran** (`Win95Fullscreen`, `scripts/services/fullscreen.js`) : `isSupported / isActive / enter / exit / toggle` (promesses `{ ok, message }`), événement `win95:fullscreen-changed`. Entrée **Plein écran** dans Paramètres du menu Démarrer (application `fullscreen` de `kind: "command"` : aucune fenêtre), bouton de la zone de notification avec `ui.trayButtons`, et `ui.fullscreenOnFirstGesture` : demandé au premier clic ou à la première touche, **une seule fois** (un navigateur interdit le plein écran sans geste ; si le visiteur en sort avec Échap, on ne le lui impose pas de nouveau). Rien n'est affiché si le navigateur ne le permet pas (iPhone).
+- **`ui.tapToOpen`** : sur écran tactile (`(pointer: coarse)`), un simple appui sur une icône du bureau l'ouvre, au lieu du double-clic (désactivé par défaut).
+- **`ui.maximizeBelow`** : sous cette largeur d'écran (px), les fenêtres redimensionnables s'ouvrent agrandies (les accessoires à taille fixe et les feuilles de propriétés ne le sont jamais). `toggleMaximize(fenêtre, { silent })`.
+- **API d'extension** : `registerApp({ kind: "command" })` déclare une entrée sans fenêtre (`create` renvoie `null`), ignorée par le test « toutes les applications s'ouvrent ».
+- Tests : échelle (variable, hauteurs de barre des tâches et de titre, fenêtre agrandie, corps de fenêtre, mémorisation, événement, rechargement), bouton et onglet du Panneau, grille des icônes, plein écran (faux navigateur : un seul appel au premier geste, bouton, menu, absence de prise en charge), appui tactile (activé et désactivé), petits écrans.
+
+**Correction**
+- La feuille de base (`assets/win95.css`) contenait une règle globale `header { height: 100vh; background: black; … }` (reste d'un gabarit à vidéo) qui s'appliquait à **tout** élément `<header>` de la page, y compris ceux des projets. Elle est supprimée.
+
 ## 1.5.0 — Lecteur multimédia : barre des tâches, YouTube, playlists, diffusion
 
 Version mineure : rien d'existant ne change de contrat. Ajouts de clés de stockage et d'événements consommés, et de sources dans la CSP.

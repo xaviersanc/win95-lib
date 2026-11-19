@@ -10,7 +10,7 @@ body.win95-desktop .explorer-menu-bar {
     gap: 14px;
     align-items: center;
     padding: 2px 8px 3px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     border-bottom: 1px solid #808080;
     background: #c0c0c0;
     color: #000;
@@ -33,7 +33,7 @@ body.win95-desktop .explorer-toolbar {
 body.win95-desktop .explorer-btn {
     min-width: 26px;
     padding: 3px 8px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     line-height: 1;
 }
 
@@ -47,7 +47,7 @@ body.win95-desktop .explorer-address {
     min-width: 0;
     height: 22px;
     padding: 2px 6px;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
 }
 
 body.win95-desktop .explorer-layout {
@@ -63,7 +63,7 @@ body.win95-desktop .explorer-list {
     overflow: auto;
     background: #fff;
     color: #000;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     padding: 6px;
     border-right: 1px solid #808080;
 }
@@ -93,7 +93,7 @@ body.win95-desktop .tree-button {
     border: 0;
     background: transparent;
     color: inherit;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     padding: 1px 3px;
     text-align: left;
     width: 100%;
@@ -238,7 +238,7 @@ body.win95-desktop .explorer-status {
     border-top: 1px solid #808080;
     padding: 3px 56px 3px 6px;
     background: #c0c0c0;
-    font-size: 12px;
+    font-size: calc(12px * var(--win95-k, 1));
     color: #000;
 }
 
