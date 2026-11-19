@@ -15,3 +15,22 @@ tests/.tmp/
 .env
 .env.local
 .vercel/
+
+# Consignes privées pour l'assistant IA et configuration locale
+CLAUDE.md
+.claude/
+CLAUDE.local.md
+
+# Secrets et identifiants (ne jamais versionner)
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+service-account*.json
+client_secret*.json
+credentials.json
+.supabase/
+.vercel/
+vercel/.env
